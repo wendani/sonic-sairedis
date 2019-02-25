@@ -240,17 +240,72 @@ void redisPutFdbEntryToAsicView(
     g_redisClient->hset(key, strAttrId, strAttrValue);
 }
 
+void check_fdb_event_notification_data(
+        _In_ const sai_fdb_event_notification_data_t& data)
+{
+    SWSS_LOG_ENTER();
+
+    /*
+     * Any new RID value spotted in fdb notification can happen for 2 reasons:
+     *
+     * - a bug is present on the vendor SAI, all RID's are already in local or
+     *   REDIS ASIC DB but vendor SAI returned new or invalid RID
+     *
+     * - orch agent didn't query yet bridge ID/vlan ID and already
+     *   started to receive fdb notifications in which case warn message
+     *   could be ignored.
+     *
+     * If vendor SAI will return invalid RID, then this will later on lead to
+     * inconsistent DB state and possible failure on apply view after cold or
+     * warm boot.
+     *
+     * On switch init we do discover phase, and we should discover all objects
+     * so we should not get any of those messages if SAI is in consistent
+     * state.
+     */
+
+    if (!check_rid_exists(data.fdb_entry.bv_id))
+        SWSS_LOG_ERROR("bv_id RID 0x%lx is not present on local ASIC DB: %s", data.fdb_entry.bv_id,
+                sai_serialize_fdb_entry(data.fdb_entry).c_str());
+
+    if (!check_rid_exists(data.fdb_entry.switch_id) || data.fdb_entry.switch_id == SAI_NULL_OBJECT_ID)
+        SWSS_LOG_ERROR("switch_id RID 0x%lx is not present on local ASIC DB: %s", data.fdb_entry.bv_id,
+                sai_serialize_fdb_entry(data.fdb_entry).c_str());
+
+    for (uint32_t i = 0; i < data.attr_count; i++)
+    {
+        const sai_attribute_t& attr = data.attr[i];
+
+        auto meta = sai_metadata_get_attr_metadata(SAI_OBJECT_TYPE_FDB_ENTRY, attr.id);
+
+        if (meta == NULL)
+        {
+            SWSS_LOG_ERROR("unable to get metadata for fdb_entry attr.id = %d", attr.id);
+            continue;
+        }
+
+        // skip non oid attributes
+        if (meta->attrvaluetype != SAI_ATTR_VALUE_TYPE_OBJECT_ID)
+            continue;
+
+        if (!check_rid_exists(attr.value.oid))
+            SWSS_LOG_WARN("RID 0x%lx on %s is not present on local ASIC DB", attr.value.oid, meta->attridname);
+    }
+}
+
 void process_on_fdb_event(
         _In_ uint32_t count,
         _In_ sai_fdb_event_notification_data_t *data)
 {
     SWSS_LOG_ENTER();
 
-    SWSS_LOG_DEBUG("fdb event count: %d", count);
+    SWSS_LOG_INFO("fdb event count: %u", count);
 
     for (uint32_t i = 0; i < count; i++)
     {
         sai_fdb_event_notification_data_t *fdb = &data[i];
+
+        check_fdb_event_notification_data(*fdb);
 
         SWSS_LOG_DEBUG("fdb %u: type: %d", i, fdb->event_type);
 
@@ -458,6 +513,7 @@ std::condition_variable cv;
 class ntf_queue_t
 {
 public:
+    ntf_queue_t() { }
     bool enqueue(swss::KeyOpFieldsValuesTuple msg);
     bool tryDequeue(swss::KeyOpFieldsValuesTuple& msg);
     size_t queueStats()
@@ -480,7 +536,15 @@ private:
     const size_t limit = 300000;
 };
 
-static std::unique_ptr<ntf_queue_t> ntf_queue_hdlr;
+
+/*
+ * Make sure that notification queue pointer is populated before we start
+ * thread, and before we create_switch, since at switch_create we can start
+ * receiving fdb_notifications which will arrive on different thread and
+ * will call queueStats() when queue pointer could be null (this=0x0).
+ */
+
+static std::unique_ptr<ntf_queue_t> ntf_queue_hdlr = std::unique_ptr<ntf_queue_t>(new ntf_queue_t);
 
 bool ntf_queue_t::tryDequeue(
         _Out_ swss::KeyOpFieldsValuesTuple &item)
@@ -527,7 +591,7 @@ bool ntf_queue_t::enqueue(
 
     if (!(log_count % 1000))
     {
-        SWSS_LOG_NOTICE("Too many messages in queue (%ld), dropped %ld FDB events!",
+        SWSS_LOG_NOTICE("Too many messages in queue (%zu), dropped %u FDB events!",
                          queueStats(), (log_count+1));
     }
 
@@ -640,8 +704,6 @@ std::unique_lock<std::mutex> ulock(ntf_mutex);
 void ntf_process_function()
 {
     SWSS_LOG_ENTER();
-
-    ntf_queue_hdlr = std::unique_ptr<ntf_queue_t>(new ntf_queue_t);
 
     while (runThread)
     {
@@ -775,6 +837,6 @@ void check_notifications_pointers(
          * Here we translated pointer, just log it.
          */
 
-        SWSS_LOG_INFO("%s: %lp (orch) => %lp (syncd)", meta->attridname, prev, attr.value.ptr);
+        SWSS_LOG_INFO("%s: 0x%lX (orch) => 0x%lX (syncd)", meta->attridname, (uint64_t)prev, (uint64_t)attr.value.ptr);
     }
 }

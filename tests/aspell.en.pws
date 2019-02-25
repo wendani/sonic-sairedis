@@ -107,6 +107,7 @@ mlnx
 mpls
 mutex
 mutexes
+MTU
 namespace
 namespaces
 NHG
@@ -150,6 +151,8 @@ removedVidToRid
 RID
 RIDs
 RIDTOVID
+rif
+RIF
 RO
 RPC
 runtime

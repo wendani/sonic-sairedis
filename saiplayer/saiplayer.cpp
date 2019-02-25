@@ -723,17 +723,27 @@ void handle_get_response(
 {
     SWSS_LOG_ENTER();
 
+    // timestamp|action|objecttype:objectid|attrid=value,...
+    auto v = swss::tokenize(response, '|');
+
     if (status != SAI_STATUS_SUCCESS)
     {
-        // TODO check if status is correct for get
-        SWSS_LOG_WARN("status is not success: %s", sai_serialize_status(status).c_str());
+        sai_status_t expectedStatus;
+        sai_deserialize_status(v.at(2), expectedStatus);
+
+        if (status == expectedStatus)
+        {
+            // GET api was not successful but status is equal to recording
+            return;
+        }
+
+        SWSS_LOG_WARN("status is: %s but expected: %s",
+                sai_serialize_status(status).c_str(),
+                sai_serialize_status(expectedStatus).c_str());
         return;
     }
 
     //std::cout << "processing " << response << std::endl;
-
-    // timestamp|action|objecttype:objectid|attrid=value,...
-    auto v = swss::tokenize(response, '|');
 
     auto values = get_values(v);
 
@@ -1069,6 +1079,8 @@ void processBulk(
     }
 }
 
+bool g_sleep = false;
+
 int replay(int argc, char **argv)
 {
     //swss::Logger::getInstance().setMinPrio(swss::Logger::SWSS_DEBUG);
@@ -1210,9 +1222,9 @@ int replay(int argc, char **argv)
 
         if (status != SAI_STATUS_SUCCESS)
         {
-            if (api == SAI_COMMON_API_GET && status == SAI_STATUS_NOT_IMPLEMENTED)
+            if (api == SAI_COMMON_API_GET)
             {
-                // TODO check if actual status for get is correct
+                // GET status is checked in handle response
             }
             else
                 SWSS_LOG_THROW("failed to execute api: %c: %s", op, sai_serialize_status(status).c_str());
@@ -1236,16 +1248,50 @@ int replay(int argc, char **argv)
             catch (const std::exception &e)
             {
                 SWSS_LOG_NOTICE("line: %s", line.c_str());
-                SWSS_LOG_NOTICE("resp: %s", response.c_str());
+                SWSS_LOG_NOTICE("resp (expected): %s", response.c_str());
+                SWSS_LOG_NOTICE("got: %s", sai_serialize_status(status).c_str());
+
+                if (api == SAI_COMMON_API_GET && (status == SAI_STATUS_SUCCESS || status == SAI_STATUS_BUFFER_OVERFLOW))
+                {
+                    // log each get parameter
+                    for (uint32_t i = 0; i < attr_count; ++i)
+                    {
+                        auto meta = sai_metadata_get_attr_metadata(object_type, attr_list[i].id);
+
+                        auto val = sai_serialize_attr_value(*meta, attr_list[i]);
+
+                        SWSS_LOG_NOTICE(" - %s:%s", meta->attridname, val.c_str());
+                    }
+                }
 
                 exit(EXIT_FAILURE);
             }
+
+                if (api == SAI_COMMON_API_GET && (status == SAI_STATUS_SUCCESS || status == SAI_STATUS_BUFFER_OVERFLOW))
+                {
+                    // log each get parameter
+                    for (uint32_t i = 0; i < attr_count; ++i)
+                    {
+                        auto meta = sai_metadata_get_attr_metadata(object_type, attr_list[i].id);
+
+                        auto val = sai_serialize_attr_value(*meta, attr_list[i]);
+
+                        SWSS_LOG_NOTICE(" - %s:%s", meta->attridname, val.c_str());
+                    }
+                }
         }
     }
 
     infile.close();
 
     SWSS_LOG_NOTICE("finished replaying %s with SUCCESS", filename);
+
+    if (g_sleep)
+    {
+        fprintf(stderr, "Reply SUCCESS, sleeping, watching for notifications\n");
+
+        sleep(-1);
+    }
 
     return 0;
 }
@@ -1263,6 +1309,8 @@ void printUsage()
     std::cout << "        Enable temporary view between init and apply" << std::endl << std::endl;
     std::cout << "    -i --inspectAsic:" << std::endl;
     std::cout << "        Inspect ASIC by ASIC DB" << std::endl << std::endl;
+    std::cout << "    -s --sleep:" << std::endl;
+    std::cout << "        Sleep after success reply, to notice any switch notifications" << std::endl << std::endl;
     std::cout << "    -h --help:" << std::endl;
     std::cout << "        Print out this message" << std::endl << std::endl;
 }
@@ -1283,10 +1331,11 @@ int handleCmdLine(int argc, char **argv)
             { "skipNotifySyncd",  no_argument,       0, 'C' },
             { "enableDebug",      no_argument,       0, 'd' },
             { "inspectAsic",      no_argument,       0, 'i' },
+            { "sleep",            no_argument,       0, 's' },
             { 0,                  0,                 0,  0  }
         };
 
-        const char* const optstring = "hCdui";
+        const char* const optstring = "hCduis";
 
         int c = getopt_long(argc, argv, optstring, long_options, 0);
 
@@ -1309,6 +1358,10 @@ int handleCmdLine(int argc, char **argv)
 
             case 'i':
                 g_inspectAsic = true;
+                break;
+
+            case 's':
+                g_sleep = true;
                 break;
 
             case 'h':

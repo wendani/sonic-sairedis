@@ -448,6 +448,34 @@ sai_object_id_t translate_rid_to_vid(
     return vid;
 }
 
+/**
+ * @brief Check if RID exists on the ASIC DB.
+ *
+ * @param rid Real object id to check.
+ *
+ * @return True if exists or SAI_NULL_OBJECT_ID, otherwise false.
+ */
+bool check_rid_exists(
+        _In_ sai_object_id_t rid)
+{
+    SWSS_LOG_ENTER();
+
+    if (rid == SAI_NULL_OBJECT_ID)
+        return true;
+
+    if (local_rid_to_vid.find(rid) != local_rid_to_vid.end())
+        return true;
+
+    std::string str_rid = sai_serialize_object_id(rid);
+
+    auto pvid = g_redisClient->hget(RIDTOVID, str_rid);
+
+    if (pvid != NULL)
+        return true;
+
+    return false;
+}
+
 void translate_list_rid_to_vid(
         _In_ sai_object_list_t &element,
         _In_ sai_object_id_t switch_id)
@@ -1626,6 +1654,28 @@ void InspectAsic()
     }
 }
 
+sai_status_t onApplyViewInFastFastBoot()
+{
+    SWSS_LOG_ENTER();
+
+    sai_switch_api_t* sai_switch_api = nullptr;
+    sai_api_query(SAI_API_SWITCH, (void**)&sai_switch_api);
+
+    sai_attribute_t attr;
+
+    attr.id = SAI_SWITCH_ATTR_FAST_API_ENABLE;
+    attr.value.booldata = false;
+
+    sai_status_t status = sai_switch_api->set_switch_attribute(gSwitchId, &attr);
+
+    if (status != SAI_STATUS_SUCCESS)
+    {
+        SWSS_LOG_ERROR("Failed to set SAI_SWITCH_ATTR_FAST_API_ENABLE=false: %s", sai_serialize_status(status).c_str());
+    }
+
+    return status;
+}
+
 sai_status_t notifySyncd(
         _In_ const std::string& op)
 {
@@ -1657,6 +1707,8 @@ sai_status_t notifySyncd(
     {
         SWSS_LOG_NOTICE("very first run is TRUE, op = %s", op.c_str());
 
+        sai_status_t status = SAI_STATUS_SUCCESS;
+
         /*
          * On the very first start of syncd, "compile" view is directly applied
          * on device, since it will make it easier to switch to new asic state
@@ -1686,6 +1738,12 @@ sai_status_t notifySyncd(
 
             g_asicInitViewMode = false;
 
+            if (options.startType == SAI_FASTFAST_BOOT)
+            {
+                /* fastfast boot configuration end */
+                status = onApplyViewInFastFastBoot();
+            }
+
             SWSS_LOG_NOTICE("setting very first run to FALSE, op = %s", op.c_str());
         }
         else
@@ -1693,9 +1751,9 @@ sai_status_t notifySyncd(
             SWSS_LOG_THROW("unknown operation: %s", op.c_str());
         }
 
-        sendNotifyResponse(SAI_STATUS_SUCCESS);
+        sendNotifyResponse(status);
 
-        return SAI_STATUS_SUCCESS;
+        return status;
     }
 
     if (op == SYNCD_INIT_VIEW)
@@ -1786,7 +1844,7 @@ std::vector<T> extractCounterIdsGeneric(
     {
         std::string field = fvField(v);
         T counterId;
-        deserializeIdFn(field, counterId);
+        deserializeIdFn(field.c_str(), &counterId);
 
         counterIdList.push_back(counterId);
     }
@@ -1812,7 +1870,7 @@ sai_status_t getStatsGeneric(
     return getStatsFn(
             object_id,
             (uint32_t)counter_ids.size(),
-            counter_ids.data(),
+            (const sai_stat_id_t*)counter_ids.data(),
             counters.data());
 }
 
@@ -2596,7 +2654,7 @@ sai_status_t processEvent(
          * TODO: use metadata utils is object type valid.
          */
 
-        if (object_type == SAI_OBJECT_TYPE_NULL || object_type >= SAI_OBJECT_TYPE_MAX)
+        if (object_type == SAI_OBJECT_TYPE_NULL || object_type >= SAI_OBJECT_TYPE_EXTENSIONS_MAX)
         {
             SWSS_LOG_THROW("undefined object type %s", sai_serialize_object_type(object_type).c_str());
         }
@@ -2854,6 +2912,10 @@ void processFlexCounterEvent(
         {
             FlexCounter::removePriorityGroup(vid, groupName);
         }
+        else if (objectType == SAI_OBJECT_TYPE_ROUTER_INTERFACE)
+        {
+            FlexCounter::removeRif(vid, groupName);
+        }
         else
         {
             SWSS_LOG_ERROR("Object type for removal not supported, %s", objectTypeStr.c_str());
@@ -2876,7 +2938,7 @@ void processFlexCounterEvent(
                 for (const auto &str : idStrings)
                 {
                     sai_port_stat_t stat;
-                    sai_deserialize_port_stat(str, stat);
+                    sai_deserialize_port_stat(str.c_str(), &stat);
                     portCounterIds.push_back(stat);
                 }
                 FlexCounter::setPortCounterList(vid, rid, groupName, portCounterIds);
@@ -2887,7 +2949,7 @@ void processFlexCounterEvent(
                 for (const auto &str : idStrings)
                 {
                     sai_queue_stat_t stat;
-                    sai_deserialize_queue_stat(str, stat);
+                    sai_deserialize_queue_stat(str.c_str(), &stat);
                     queueCounterIds.push_back(stat);
                 }
                 FlexCounter::setQueueCounterList(vid, rid, groupName, queueCounterIds);
@@ -2910,7 +2972,7 @@ void processFlexCounterEvent(
                 for (const auto &str : idStrings)
                 {
                     sai_ingress_priority_group_stat_t stat;
-                    sai_deserialize_ingress_priority_group_stat(str, stat);
+                    sai_deserialize_ingress_priority_group_stat(str.c_str(), &stat);
                     pgCounterIds.push_back(stat);
                 }
                 FlexCounter::setPriorityGroupCounterList(vid, rid, groupName, pgCounterIds);
@@ -2926,6 +2988,17 @@ void processFlexCounterEvent(
                 }
 
                 FlexCounter::setPriorityGroupAttrList(vid, rid, groupName, pgAttrIds);
+            }
+            else if (objectType == SAI_OBJECT_TYPE_ROUTER_INTERFACE && field == RIF_COUNTER_ID_LIST)
+            {
+                std::vector<sai_router_interface_stat_t> rifCounterIds;
+                for (const auto &str : idStrings)
+                {
+                    sai_router_interface_stat_t stat;
+                    sai_deserialize_router_interface_stat(str.c_str(), &stat);
+                    rifCounterIds.push_back(stat);
+                }
+                FlexCounter::setRifCounterList(vid, rid, groupName, rifCounterIds);
             }
             else
             {
@@ -3246,35 +3319,6 @@ syncd_restart_type_t handleRestartQuery(swss::NotificationConsumer &restartQuery
     return SYNCD_RESTART_TYPE_COLD;
 }
 
-void handleFfbEvent(swss::NotificationConsumer &ffb)
-{
-    SWSS_LOG_ENTER();
-
-    std::string op;
-    std::string data;
-    std::vector<swss::FieldValueTuple> values;
-
-    ffb.pop(op, data, values);
-
-    if ((op == "SET") && (data == "ISSU_END"))
-    {
-        sai_switch_api_t *sai_switch_api = NULL;
-        sai_api_query(SAI_API_SWITCH, (void**)&sai_switch_api);
-
-        sai_attribute_t attr;
-
-        attr.id = SAI_SWITCH_ATTR_FAST_API_ENABLE;
-        attr.value.booldata = false;
-
-        sai_status_t status = sai_switch_api->set_switch_attribute(gSwitchId, &attr);
-
-        if (status != SAI_STATUS_SUCCESS)
-        {
-            SWSS_LOG_ERROR("Failed to set SAI_SWITCH_ATTR_FAST_API_ENABLE=false: %s", sai_serialize_status(status).c_str());
-        }
-    }
-}
-
 bool isVeryFirstRun()
 {
     SWSS_LOG_ENTER();
@@ -3530,7 +3574,6 @@ int syncd_main(int argc, char **argv)
     std::shared_ptr<swss::NotificationConsumer> restartQuery = std::make_shared<swss::NotificationConsumer>(dbAsic.get(), "RESTARTQUERY");
     std::shared_ptr<swss::ConsumerTable> flexCounter = std::make_shared<swss::ConsumerTable>(dbFlexCounter.get(), FLEX_COUNTER_TABLE);
     std::shared_ptr<swss::ConsumerTable> flexCounterGroup = std::make_shared<swss::ConsumerTable>(dbFlexCounter.get(), FLEX_COUNTER_GROUP_TABLE);
-    std::shared_ptr<swss::NotificationConsumer> ffb = std::make_shared<swss::NotificationConsumer>(dbAsic.get(), "MLNX_FFB");
 
     /*
      * At the end we cant use producer consumer concept since if one process
@@ -3543,7 +3586,8 @@ int syncd_main(int argc, char **argv)
 
     g_veryFirstRun = isVeryFirstRun();
 
-    if (swss::WarmStart::isWarmStart())
+    /* ignore warm logic here if syncd starts in Mellanox fastfast boot mode */
+    if (swss::WarmStart::isWarmStart() && (options.startType != SAI_FASTFAST_BOOT))
     {
         options.startType = SAI_WARM_BOOT;
     }
@@ -3580,7 +3624,7 @@ int syncd_main(int argc, char **argv)
     {
         /*
          * Mellanox SAI requires to pass SAI_WARM_BOOT as SAI_BOOT_KEY
-         * to start 'fast-fast'
+         * to start 'fastfast'
          */
         gProfileMap[SAI_KEY_BOOT_TYPE] = std::to_string(SAI_WARM_BOOT);
     } else {
@@ -3629,6 +3673,10 @@ int syncd_main(int argc, char **argv)
         onSyncdStart(options.startType == SAI_WARM_BOOT);
         SWSS_LOG_NOTICE("after onSyncdStart");
 
+        // create notifications processing thread after we create_switch to
+        // make sure, we have switch_id translated to VID before we start
+        // processing possible quick fdb notifications, and pointer for
+        // notification queue is created before we create switch
         startNotificationsProcessingThread();
 
         SWSS_LOG_NOTICE("syncd listening for events");
@@ -3639,7 +3687,6 @@ int syncd_main(int argc, char **argv)
         s->addSelectable(restartQuery.get());
         s->addSelectable(flexCounter.get());
         s->addSelectable(flexCounterGroup.get());
-        s->addSelectable(ffb.get());
 
         SWSS_LOG_NOTICE("starting main loop");
 
@@ -3681,7 +3728,6 @@ int syncd_main(int argc, char **argv)
                 SWSS_LOG_TIMER("warm pre-shutdown");
 
                 FlexCounter::removeAllCounters();
-                stopNotificationsProcessingThread();
 
                 sai_attribute_t attr;
 
@@ -3728,10 +3774,6 @@ int syncd_main(int argc, char **argv)
                     attr.value.booldata = false;
                     status = sai_switch_api->set_switch_attribute(gSwitchId, &attr);
                 }
-            }
-            else if (sel == ffb.get())
-            {
-                handleFfbEvent(*ffb);
             }
             else if (sel == flexCounter.get())
             {
@@ -3790,11 +3832,11 @@ int syncd_main(int argc, char **argv)
 
     SWSS_LOG_NOTICE("Removing the switch gSwitchId=0x%lx", gSwitchId);
 
-#ifdef SAI_SWITCH_ATTR_UNINIT_DATA_PLANE_ON_REMOVAL
+#ifdef SAI_SUPPORT_UNINIT_DATA_PLANE_ON_REMOVAL
 
-    if (shutdownType == SYNCD_RESTART_TYPE_FAST)
+    if (shutdownType == SYNCD_RESTART_TYPE_FAST || shutdownType == SYNCD_RESTART_TYPE_WARM)
     {
-        SWSS_LOG_NOTICE("Fast Reboot requested, keeping data plane running");
+        SWSS_LOG_NOTICE("Fast/warm reboot requested, keeping data plane running");
 
         sai_attribute_t attr;
 
@@ -3814,13 +3856,13 @@ int syncd_main(int argc, char **argv)
 
     FlexCounter::removeAllCounters();
 
-    // Stop notification thread before removing switch
-    stopNotificationsProcessingThread();
-
     {
         SWSS_LOG_TIMER("remove switch");
         status = sai_switch_api->remove_switch(gSwitchId);
     }
+
+    // Stop notification thread after removing switch
+    stopNotificationsProcessingThread();
 
     if (status != SAI_STATUS_SUCCESS)
     {
