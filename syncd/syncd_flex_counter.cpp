@@ -1209,7 +1209,7 @@ void FlexCounter::saiUpdateSupportedQueueCounters(
 
         if (m_statsMode == SAI_STATS_MODE_READ_AND_CLEAR)
         {
-            status = sai_metadata_sai_queue_api->clear_queue_stats(queueId, 1, &counter);
+            status = sai_metadata_sai_queue_api->clear_queue_stats(queueId, 1, (const sai_stat_id_t *)&counter);
             if (status != SAI_STATUS_SUCCESS)
             {
                 SWSS_LOG_NOTICE("%s: clear counter %s is not supported on queue %s, rv: %s",
@@ -1252,7 +1252,7 @@ void FlexCounter::saiUpdateSupportedPriorityGroupCounters(
 
         if (m_statsMode == SAI_STATS_MODE_READ_AND_CLEAR)
         {
-            status = sai_metadata_sai_buffer_api->clear_ingress_priority_group_stats(priorityGroupId, 1, &counter);
+            status = sai_metadata_sai_buffer_api->clear_ingress_priority_group_stats(priorityGroupId, 1, (const sai_stat_id_t *)&counter);
             if (status != SAI_STATUS_SUCCESS)
             {
                 SWSS_LOG_NOTICE("%s: clear counter %s is not supported on PG %s, rv: %s",
