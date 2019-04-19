@@ -2988,12 +2988,12 @@ void sai_deserialize_ingress_priority_group_attr(
 }
 
 void sai_deserialize_buffer_pool_stat(
-        _In_ const std::string &s,
-        _Out_ sai_buffer_pool_stat_t &stat)
+        _In_ const std::string& s,
+        _Out_ sai_buffer_pool_stat_t& stat)
 {
     SWSS_LOG_ENTER();
 
-    sai_deserialize_enum(s, &sai_metadata_enum_sai_buffer_pool_stat_t, (int32_t &)stat);
+    sai_deserialize_enum(s, &sai_metadata_enum_sai_buffer_pool_stat_t, (int32_t&)stat);
 }
 
 void sai_deserialize_queue_attr(
