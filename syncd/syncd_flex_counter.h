@@ -159,6 +159,7 @@ class FlexCounter
         std::set<std::string> m_queuePlugins;
         std::set<std::string> m_portPlugins;
         std::set<std::string> m_priorityGroupPlugins;
+        std::set<std::string> m_bufferPoolPlugins;
 
         std::atomic_bool m_runFlexCounterThread = { false };
         std::shared_ptr<std::thread> m_flexCounterThread = nullptr;

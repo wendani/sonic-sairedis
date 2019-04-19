@@ -522,6 +522,23 @@ void FlexCounter::addPriorityGroupCounterPlugin(
     SWSS_LOG_NOTICE("Priority group counters plugin %s registered", sha.c_str());
 }
 
+void FlexCounter::addBufferPoolCounterPlugin(
+        _In_ std::string sha,
+        _In_ std::string instanceId)
+{
+    SWSS_LOG_ENTER();
+
+    FlexCounter &fc = getInstance(instanceId);
+
+    if (fc.m_bufferPoolPlugins.find(sha) != fc.m_bufferPoolPlugins.end())
+    {
+        SWSS_LOG_ERROR("Plugin %s already registered", sha.c_str());
+    }
+
+    fc.m_bufferPoolPlugins.insert(sha);
+    SWSS_LOG_NOTICE("Buffer pool counters plugin %s registered", sha.c_str());
+}
+
 void FlexCounter::removeCounterPlugin(
         _In_ std::string sha,
         _In_ std::string instanceId)
@@ -533,6 +550,7 @@ void FlexCounter::removeCounterPlugin(
     fc.m_queuePlugins.erase(sha);
     fc.m_portPlugins.erase(sha);
     fc.m_priorityGroupPlugins.erase(sha);
+    fc.m_bufferPoolPlugins.erase(sha);
 
     // Remove flex counter if all counter IDs and plugins are unregistered
     if (fc.isEmpty())
@@ -551,6 +569,7 @@ void FlexCounter::removeCounterPlugin(
     fc.m_queuePlugins.clear();
     fc.m_portPlugins.clear();
     fc.m_priorityGroupPlugins.clear();
+    fc.m_bufferPoolPlugins.clear();
 
     // Remove flex counter if all counter IDs and plugins are unregistered
     if (fc.isEmpty())
