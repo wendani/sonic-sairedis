@@ -2899,6 +2899,10 @@ void processFlexCounterEvent(
         {
             FlexCounter::removePriorityGroup(vid, groupName);
         }
+        else if (objectType == SAI_OBJECT_TYPE_BUFFER_POOL)
+        {
+            FlexCounter::removeBufferPool(vid, groupName);
+        }
         else
         {
             SWSS_LOG_ERROR("Object type for removal not supported, %s", objectTypeStr.c_str());
@@ -2924,6 +2928,7 @@ void processFlexCounterEvent(
                     sai_deserialize_port_stat(str, stat);
                     portCounterIds.push_back(stat);
                 }
+
                 FlexCounter::setPortCounterList(vid, rid, groupName, portCounterIds);
             }
             else if (objectType == SAI_OBJECT_TYPE_QUEUE && field == QUEUE_COUNTER_ID_LIST)
@@ -2935,6 +2940,7 @@ void processFlexCounterEvent(
                     sai_deserialize_queue_stat(str, stat);
                     queueCounterIds.push_back(stat);
                 }
+
                 FlexCounter::setQueueCounterList(vid, rid, groupName, queueCounterIds);
             }
             else if (objectType == SAI_OBJECT_TYPE_QUEUE && field == QUEUE_ATTR_ID_LIST)
@@ -2958,6 +2964,7 @@ void processFlexCounterEvent(
                     sai_deserialize_ingress_priority_group_stat(str, stat);
                     pgCounterIds.push_back(stat);
                 }
+
                 FlexCounter::setPriorityGroupCounterList(vid, rid, groupName, pgCounterIds);
             }
             else if (objectType == SAI_OBJECT_TYPE_INGRESS_PRIORITY_GROUP && field == PG_ATTR_ID_LIST)
@@ -2971,6 +2978,18 @@ void processFlexCounterEvent(
                 }
 
                 FlexCounter::setPriorityGroupAttrList(vid, rid, groupName, pgAttrIds);
+            }
+            else if (objectType == SAI_OBJECT_TYPE_BUFFER_POOL && field == BUFFER_POOL_COUNTER_ID_LIST)
+            {
+                std::vector<sai_buffer_pool_stat_t> bufferPoolCounterIds;
+                for (const auto &str : idStrings)
+                {
+                    sai_buffer_pool_stat_t stat;
+                    sai_deserialize_buffer_pool_stat(str, stat);
+                    bufferPoolCounterIds.push_back(stat);
+                }
+
+                FlexCounter::setBufferPoolCounterList(vid, rid, groupName, bufferPoolCounterIds);
             }
             else
             {
