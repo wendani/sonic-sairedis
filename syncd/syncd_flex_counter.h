@@ -142,7 +142,7 @@ class FlexCounter
         struct BufferPoolCounterIds
         {
             BufferPoolCounterIds(
-                _In_ sai_object_id_t bufferPool;
+                _In_ sai_object_id_t bufferPool,
                 _In_ const std::vector<sai_buffer_pool_stat_t> &bufferPoolIds);
 
             sai_object_id_t bufferPoolId;
