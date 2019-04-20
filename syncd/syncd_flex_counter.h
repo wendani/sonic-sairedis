@@ -63,6 +63,9 @@ class FlexCounter
         static void removePriorityGroup(
                 _In_ sai_object_id_t priorityGroupVid,
                 _In_ std::string instanceId);
+        static void removeBufferPool(
+                _In_ sai_object_id_t bufferPoolVid,
+                _In_ std::string instanceId);
 
         static void addPortCounterPlugin(
                 _In_ std::string sha,
