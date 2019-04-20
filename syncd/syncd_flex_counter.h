@@ -76,6 +76,9 @@ class FlexCounter
         static void addPriorityGroupCounterPlugin(
                 _In_ std::string sha,
                 _In_ std::string instanceId);
+        static void addBufferPoolCounterPlugin(
+                _In_ std::string sha,
+                _In_ std::string instanceId);
         static void removeCounterPlugin(
                 _In_ std::string sha,
                 _In_ std::string instanceId);
