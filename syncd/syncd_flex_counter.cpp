@@ -612,6 +612,35 @@ void FlexCounter::removeRif(
     }
 }
 
+void FlexCounter::removeBufferPool(
+        _In_ sai_object_id_t bufferPoolVid,
+        _In_ std::string instanceId)
+{
+    SWSS_LOG_ENTER();
+
+    bool found = false;
+    FlexCounter &fc = getInstance(instanceId);
+
+    auto it = fc.m_bufferPoolCounterIdsMap.find(bufferPoolVid);
+    if (it != fc.m_bufferPoolCounterIdsMap.end())
+    {
+        fc.m_bufferPoolCounterIdsMap.erase(it);
+        found = true;
+    }
+
+    if (!found)
+    {
+        SWSS_LOG_NOTICE("Trying to remove nonexisting buffer pool 0x%lx from flex counter", bufferPoolVid, fc.m_instanceId.c_str());
+        return;
+    }
+
+    // Remove flex counter if all counter IDs and plugins are unregistered
+    if (fc.isEmpty())
+    {
+        removeInstance(instanceId);
+    }
+}
+
 void FlexCounter::addPortCounterPlugin(
         _In_ std::string sha,
         _In_ std::string instanceId)

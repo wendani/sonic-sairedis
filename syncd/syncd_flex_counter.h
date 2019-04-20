@@ -71,6 +71,9 @@ class FlexCounter
         static void removeRif(
                 _In_ sai_object_id_t rifVid,
                 _In_ std::string instanceId);
+        static void removeBufferPool(
+                _In_ sai_object_id_t bufferPoolVid,
+                _In_ std::string instanceId);
 
         static void addPortCounterPlugin(
                 _In_ std::string sha,
