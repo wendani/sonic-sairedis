@@ -1140,9 +1140,11 @@ void FlexCounter::runPlugins(
     std::map<sai_object_id_t, std::shared_ptr<QueueAttrIds>> queueAttrIdsMap;
     std::map<sai_object_id_t, std::shared_ptr<IngressPriorityGroupCounterIds>> priorityGroupCounterIdsMap;
     std::map<sai_object_id_t, std::shared_ptr<IngressPriorityGroupAttrIds>> priorityGroupAttrIdsMap;
+    std::map<sai_object_id_t, std::shared_ptr<BufferPoolCounterIds>> bufferPoolCounterIdsMap;
     std::set<std::string> queuePlugins;
     std::set<std::string> portPlugins;
     std::set<std::string> priorityGroupPlugins;
+    std::set<std::string> bufferPoolPlugins;
 
     {
         std::lock_guard<std::mutex> lock(g_mutex);
@@ -1154,6 +1156,8 @@ void FlexCounter::runPlugins(
         priorityGroupCounterIdsMap = m_priorityGroupCounterIdsMap;
         priorityGroupAttrIdsMap = m_priorityGroupAttrIdsMap;
         priorityGroupPlugins = m_priorityGroupPlugins;
+        bufferPoolCounterIdsMap = m_bufferPoolCounterIdsMap;
+        bufferPoolPlugins = m_bufferPoolPlugins;
     }
 
     const std::vector<std::string> argv = 
@@ -1169,7 +1173,6 @@ void FlexCounter::runPlugins(
     {
         portList.push_back(sai_serialize_object_id(kv.first));
     }
-
     for (const auto& sha : portPlugins)
     {
         runRedisScript(db, sha, portList, argv);
@@ -1181,7 +1184,6 @@ void FlexCounter::runPlugins(
     {
         queueList.push_back(sai_serialize_object_id(kv.first));
     }
-
     for (const auto& sha : queuePlugins)
     {
         runRedisScript(db, sha, queueList, argv);
@@ -1193,10 +1195,20 @@ void FlexCounter::runPlugins(
     {
         priorityGroupList.push_back(sai_serialize_object_id(kv.first));
     }
-
     for (const auto& sha : priorityGroupPlugins)
     {
         runRedisScript(db, sha, priorityGroupList, argv);
+    }
+
+    std::vector<std::string> bufferPoolVids;
+    bufferPoolVids.reserve(bufferPoolCounterIdsMap.size());
+    for (const auto& it : bufferPoolCounterIdsMap)
+    {
+        bufferPoolVids.push_back(sai_serialize_object_id(it.first));
+    }
+    for (const auto& sha : bufferPoolPlugins)
+    {
+        runRedisScript(db, sha, bufferPoolVids, argv);
     }
 }
 
