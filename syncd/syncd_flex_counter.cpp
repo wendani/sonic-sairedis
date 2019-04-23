@@ -638,7 +638,7 @@ void FlexCounter::removeBufferPool(
 
     if (!found)
     {
-        SWSS_LOG_NOTICE("Trying to remove nonexisting buffer pool 0x%lx from flex counter", bufferPoolVid, fc.m_instanceId.c_str());
+        SWSS_LOG_NOTICE("Trying to remove nonexisting buffer pool 0x%lx from flex counter %s", bufferPoolVid, fc.m_instanceId.c_str());
         return;
     }
 

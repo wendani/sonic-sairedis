@@ -278,8 +278,8 @@ void sai_deserialize_ingress_priority_group_attr(
         _Out_ sai_ingress_priority_group_attr_t& attr);
 
 void sai_deserialize_buffer_pool_stat(
-        _In_ const std::string &s,
-        _Out_ sai_buffer_pool_stat_t &stat);
+        _In_ const std::string& s,
+        _Out_ sai_buffer_pool_stat_t& stat);
 
 void sai_deserialize_queue_attr(
         _In_ const std::string& s,
