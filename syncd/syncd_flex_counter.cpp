@@ -1176,12 +1176,12 @@ void FlexCounter::collectCounters(
 
         // Write counter values to DB table
         std::vector<swss::FieldValueTuple> fvTuples;
-        for (auto i = 0; i < bufferPoolCounterIds.size(); ++i)
+        for (size_t i = 0; i < bufferPoolCounterIds.size(); ++i)
         {
             fvTuples.emplace_back(sai_serialize_buffer_pool_stat(bufferPoolCounterIds[i]), std::to_string(bufferPoolStats[i]));
         }
 
-        countersTable.set(sai_serialize_object_id(bufferPoolId), fvTuples);
+        countersTable.set(sai_serialize_object_id(bufferPoolVid), fvTuples);
     }
 
     countersTable.flush();
