@@ -864,6 +864,7 @@ void FlexCounter::collectCounters(
     std::map<sai_object_id_t, std::shared_ptr<IngressPriorityGroupCounterIds>> priorityGroupCounterIdsMap;
     std::map<sai_object_id_t, std::shared_ptr<IngressPriorityGroupAttrIds>> priorityGroupAttrIdsMap;
     std::map<sai_object_id_t, std::shared_ptr<RifCounterIds>> rifCounterIdsMap;
+    std::map<sai_object_id_t, std::shared_ptr<BufferPoolCounterIds>> bufferPoolCounterIdsMap;
 
     {
         std::lock_guard<std::mutex> lock(g_mutex);
@@ -873,6 +874,7 @@ void FlexCounter::collectCounters(
         priorityGroupCounterIdsMap = m_priorityGroupCounterIdsMap;
         priorityGroupAttrIdsMap = m_priorityGroupAttrIdsMap;
         rifCounterIdsMap = m_rifCounterIdsMap;
+        bufferPoolCounterIdsMap = m_bufferPoolCounterIdsMap;
     }
 
     // Collect stats for every registered port
@@ -1125,6 +1127,61 @@ void FlexCounter::collectCounters(
         std::string rifVidStr = sai_serialize_object_id(rifVid);
 
         countersTable.set(rifVidStr, values, "");
+    }
+
+    // Collect stats for every registered buffer pool
+    for (const auto &it : bufferPoolCounterIdsMap)
+    {
+        const auto &bufferPoolVid = it.first;
+        const auto &bufferPoolId = it.second->bufferPoolId;
+        const auto &bufferPoolCounterIds = it.second->bufferPoolCounterIds;
+
+        std::vector<uint64_t> bufferPoolStats(bufferPoolCounterIds.size());
+
+        // Get buffer pool stats
+        sai_status_t status = -1;
+
+        status = sai_metadata_sai_buffer_api->get_buffer_pool_stats(
+                        bufferPoolId,
+                        static_cast<uint32_t>(bufferPoolCounterIds.size()),
+                        bufferPoolCounterIds.data(),
+                        bufferPoolStats.data());
+        if (status != SAI_STATUS_SUCCESS)
+        {
+            // Because of stat pre-qualification in setting the buffer pool counter list,
+            // it is less likely that we will get a failure return here in polling the stats
+            SWSS_LOG_ERROR("%s: failed to get stats of buffer pool %s, rv: %s",
+                    m_instanceId.c_str(),
+                    sai_serialize_object_id(bufferPoolId).c_str(),
+                    sai_serialize_status(status).c_str());
+            continue;
+        }
+        if (m_statsMode == SAI_STATS_MODE_READ_AND_CLEAR)
+        {
+            status = sai_metadata_sai_buffer_api->clear_buffer_pool_stats(
+                            bufferPoolId,
+                            static_cast<uint32_t>(bufferPoolCounterIds.size()),
+                            bufferPoolCounterIds.data());
+        }
+        if (status != SAI_STATUS_SUCCESS)
+        {
+            // Because of stat pre-qualification in setting the buffer pool counter list,
+            // it is less likely that we will get a failure return here in clearing the stats
+            SWSS_LOG_ERROR("%s: failed to clear stats of buffer pool %s, rv: %s",
+                    m_instanceId.c_str(),
+                    sai_serialize_object_id(bufferPoolId).c_str(),
+                    sai_serialize_status(status).c_str());
+            continue;
+        }
+
+        // Write counter values to DB table
+        std::vector<swss::FieldValueTuple> fvTuples;
+        for (auto i = 0; i < bufferPoolCounterIds.size(); ++i)
+        {
+            fvTuples.emplace_back(sai_serialize_buffer_pool_stat(bufferPoolCounterIds[i]), std::to_string(bufferPoolStats[i]));
+        }
+
+        countersTable.set(sai_serialize_object_id(bufferPoolId), fvTuples);
     }
 
     countersTable.flush();
