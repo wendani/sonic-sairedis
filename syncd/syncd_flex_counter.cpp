@@ -1469,11 +1469,6 @@ void FlexCounter::saiUpdateSupportedBufferPoolCounters(
 
             continue;
         }
-        SWSS_LOG_ERROR("%s: counter %s is supported on buffer pool %s, rv: %s",
-                m_instanceId.c_str(),
-                sai_serialize_buffer_pool_stat(counterId).c_str(),
-                sai_serialize_object_id(bufferPoolId).c_str(),
-                sai_serialize_status(status).c_str());
 
         if (m_statsMode == SAI_STATS_MODE_READ_AND_CLEAR)
         {
@@ -1488,11 +1483,6 @@ void FlexCounter::saiUpdateSupportedBufferPoolCounters(
 
                 continue;
             }
-            SWSS_LOG_ERROR("%s: clear counter %s is supported on buffer pool %s, rv: %s",
-                    m_instanceId.c_str(),
-                    sai_serialize_buffer_pool_stat(counterId).c_str(),
-                    sai_serialize_object_id(bufferPoolId).c_str(),
-                    sai_serialize_status(status).c_str());
         }
 
         supportedBufferPoolCounters.insert(counterId);

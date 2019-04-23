@@ -2833,7 +2833,6 @@ void processFlexCounterGroupEvent(
             }
             else if (field == BUFFER_POOL_PLUGIN_FIELD)
             {
-                SWSS_LOG_ERROR("processFlexCounterGroupEvent: groupName: %s", groupName.c_str());
                 auto shaStrings = swss::tokenize(value, ',');
                 for (const auto &sha : shaStrings)
                 {
