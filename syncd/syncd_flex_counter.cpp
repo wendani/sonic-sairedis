@@ -924,14 +924,16 @@ void FlexCounter::collectCounters(
 
         // Get queue stats
         sai_status_t status = -1;
-//        TODO: replace if with get_queue_stats_ext() call when it's fully supported
-//        Example:
-//        sai_status_t status = sai_metadata_sai_queue_api->get_queue_stats_ext(
-//                queueId,
-//                static_cast<uint32_t>(queueCounterIds.size()),
-//                queueCounterIds.data(),
-//                m_statsMode,
-//                queueStats.data());
+#if 0
+        TODO: replace if with get_queue_stats_ext() call when it is fully supported
+        Example:
+        sai_status_t status = sai_metadata_sai_queue_api->get_queue_stats_ext(
+                queueId,
+                static_cast<uint32_t>(queueCounterIds.size()),
+                queueCounterIds.data(),
+                m_statsMode,
+                queueStats.data());
+#endif
         status = sai_metadata_sai_queue_api->get_queue_stats(
                 queueId,
                 static_cast<uint32_t>(queueCounterIds.size()),
@@ -1018,7 +1020,7 @@ void FlexCounter::collectCounters(
 
         // Get PG stats
         sai_status_t status = -1;
-//        TODO: replace if with get_ingress_priority_group_stats_ext() call when it's fully supported
+        // TODO: replace if with get_ingress_priority_group_stats_ext() call when it is fully supported
         status = sai_metadata_sai_buffer_api->get_ingress_priority_group_stats(
                         priorityGroupId,
                         static_cast<uint32_t>(priorityGroupCounterIds.size()),
