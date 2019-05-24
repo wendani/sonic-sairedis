@@ -1145,7 +1145,7 @@ void FlexCounter::collectCounters(
         status = sai_metadata_sai_buffer_api->get_buffer_pool_stats(
                         bufferPoolId,
                         static_cast<uint32_t>(bufferPoolCounterIds.size()),
-                        bufferPoolCounterIds.data(),
+                        reinterpret_cast<const sai_stat_id_t *>(bufferPoolCounterIds.data()),
                         bufferPoolStats.data());
         if (status != SAI_STATUS_SUCCESS)
         {
@@ -1162,7 +1162,7 @@ void FlexCounter::collectCounters(
             status = sai_metadata_sai_buffer_api->clear_buffer_pool_stats(
                             bufferPoolId,
                             static_cast<uint32_t>(bufferPoolCounterIds.size()),
-                            bufferPoolCounterIds.data());
+                            reinterpret_cast<const sai_stat_id_t *>(bufferPoolCounterIds.data()));
         }
         if (status != SAI_STATUS_SUCCESS)
         {
