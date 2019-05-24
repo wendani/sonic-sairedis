@@ -925,16 +925,14 @@ void FlexCounter::collectCounters(
 
         // Get queue stats
         sai_status_t status = -1;
-#if 0
-        TODO: replace if with get_queue_stats_ext() call when it is fully supported
-        Example:
-        sai_status_t status = sai_metadata_sai_queue_api->get_queue_stats_ext(
-                queueId,
-                static_cast<uint32_t>(queueCounterIds.size()),
-                queueCounterIds.data(),
-                m_statsMode,
-                queueStats.data());
-#endif
+        // TODO: replace if with get_queue_stats_ext() call when it is fully supported
+        // Example:
+        // sai_status_t status = sai_metadata_sai_queue_api->get_queue_stats_ext(
+        //         queueId,
+        //         static_cast<uint32_t>(queueCounterIds.size()),
+        //         queueCounterIds.data(),
+        //         m_statsMode,
+        //         queueStats.data());
         status = sai_metadata_sai_queue_api->get_queue_stats(
                 queueId,
                 static_cast<uint32_t>(queueCounterIds.size()),
@@ -1459,7 +1457,7 @@ void FlexCounter::saiUpdateSupportedBufferPoolCounters(
 
     for (const auto &counterId : counterIds)
     {
-        sai_status_t status = sai_metadata_sai_buffer_api->get_buffer_pool_stats(bufferPoolId, 1, &counterId, &value);
+        sai_status_t status = sai_metadata_sai_buffer_api->get_buffer_pool_stats(bufferPoolId, 1, (const sai_stat_id_t *)&counterId, &value);
         if (status != SAI_STATUS_SUCCESS)
         {
             SWSS_LOG_ERROR("%s: counter %s is not supported on buffer pool %s, rv: %s",
@@ -1473,7 +1471,7 @@ void FlexCounter::saiUpdateSupportedBufferPoolCounters(
 
         if (m_statsMode == SAI_STATS_MODE_READ_AND_CLEAR)
         {
-            status = sai_metadata_sai_buffer_api->clear_buffer_pool_stats(bufferPoolId, 1, &counterId);
+            status = sai_metadata_sai_buffer_api->clear_buffer_pool_stats(bufferPoolId, 1, (const sai_stat_id_t *)&counterId);
             if (status != SAI_STATUS_SUCCESS)
             {
                 SWSS_LOG_ERROR("%s: clear counter %s is not supported on buffer pool %s, rv: %s",
