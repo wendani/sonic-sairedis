@@ -2782,7 +2782,6 @@ void processFlexCounterGroupEvent(
 {
     SWSS_LOG_ENTER();
 
-    std::lock_guard<std::mutex> lock(g_mutex);
     swss::KeyOpFieldsValuesTuple kco;
     consumer.pop(kco);
 
@@ -2851,8 +2850,6 @@ void processFlexCounterEvent(
         _In_ swss::ConsumerTable &consumer)
 {
     SWSS_LOG_ENTER();
-
-    std::lock_guard<std::mutex> lock(g_mutex);
 
     swss::KeyOpFieldsValuesTuple kco;
     consumer.pop(kco);
