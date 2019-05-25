@@ -1017,7 +1017,7 @@ void FlexCounter::collectCounters(
     }
 
     // Collect stats for every registered router interface
-    for (const auto &kv: rifCounterIdsMap)
+    for (const auto &kv: m_rifCounterIdsMap)
     {
         const auto &rifVid = kv.first;
         const auto &rifId = kv.second->rifId;
