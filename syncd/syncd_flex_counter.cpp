@@ -365,7 +365,7 @@ void FlexCounter::setPriorityGroupAttrList(
 
     FlexCounter &fc = getInstance(instanceId);
 
-    std::unique_lock<std::mutex> lkMgr(fc.m_mtx);
+    std::lock_guard<std::mutex> lkMgr(fc.m_mtx);
 
     auto it = fc.m_priorityGroupAttrIdsMap.find(priorityGroupVid);
     if (it != fc.m_priorityGroupAttrIdsMap.end())
