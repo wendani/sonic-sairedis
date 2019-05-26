@@ -383,7 +383,7 @@ void FlexCounter::setPriorityGroupAttrList(
 
     FlexCounter &fc = getInstance(instanceId);
 
-    std::unique_lock<std::mutex> lkMgr(fc.m_mtx);
+    std::lock_guard<std::mutex> lkMgr(fc.m_mtx);
 
     auto it = fc.m_priorityGroupAttrIdsMap.find(priorityGroupVid);
     if (it != fc.m_priorityGroupAttrIdsMap.end())
@@ -494,6 +494,8 @@ void FlexCounter::setBufferPoolCounterList(
 
         return;
     }
+
+    std::lock_guard<std::mutex> lkMgr(fc.m_mtx);
 
     auto it = fc.m_bufferPoolCounterIdsMap.find(bufferPoolVid);
     if (it != fc.m_bufferPoolCounterIdsMap.end())
@@ -665,6 +667,8 @@ void FlexCounter::removeBufferPool(
     bool found = false;
     FlexCounter &fc = getInstance(instanceId);
 
+    std::unique_lock<std::mutex> lkMgr(fc.m_mtx);
+
     auto it = fc.m_bufferPoolCounterIdsMap.find(bufferPoolVid);
     if (it != fc.m_bufferPoolCounterIdsMap.end())
     {
@@ -681,6 +685,7 @@ void FlexCounter::removeBufferPool(
     // Remove flex counter if all counter IDs and plugins are unregistered
     if (fc.isEmpty())
     {
+        lkMgr.unlock();
         removeInstance(instanceId);
     }
 }
@@ -755,6 +760,8 @@ void FlexCounter::addBufferPoolCounterPlugin(
     SWSS_LOG_ENTER();
 
     FlexCounter &fc = getInstance(instanceId);
+
+    std::lock_guard<std::mutex> lkMgr(fc.m_mtx);
 
     if (fc.m_bufferPoolPlugins.find(sha) != fc.m_bufferPoolPlugins.end())
     {
@@ -1169,7 +1176,7 @@ void FlexCounter::collectCounters(
     }
 
     // Collect stats for every registered buffer pool
-    for (const auto &it : bufferPoolCounterIdsMap)
+    for (const auto &it : m_bufferPoolCounterIdsMap)
     {
         const auto &bufferPoolVid = it.first;
         const auto &bufferPoolId = it.second->bufferPoolId;
@@ -1272,12 +1279,12 @@ void FlexCounter::runPlugins(
     }
 
     std::vector<std::string> bufferPoolVids;
-    bufferPoolVids.reserve(bufferPoolCounterIdsMap.size());
-    for (const auto& it : bufferPoolCounterIdsMap)
+    bufferPoolVids.reserve(m_bufferPoolCounterIdsMap.size());
+    for (const auto& it : m_bufferPoolCounterIdsMap)
     {
         bufferPoolVids.push_back(sai_serialize_object_id(it.first));
     }
-    for (const auto& sha : bufferPoolPlugins)
+    for (const auto& sha : m_bufferPoolPlugins)
     {
         runRedisScript(db, sha, bufferPoolVids, argv);
     }
