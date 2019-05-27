@@ -1310,7 +1310,6 @@ void FlexCounter::flexCounterThread(void)
         }
         while (!m_enable || isEmpty() || (m_pollInterval == 0))
         {
-            SWSS_LOG_ERROR("Flex counter thread FC %s, condition wait", m_instanceId.c_str());
             if (!m_runFlexCounterThread)
             {
                 return;
@@ -1328,7 +1327,6 @@ void FlexCounter::flexCounterThread(void)
 
         lkMgr.unlock();
 
-        SWSS_LOG_ERROR("End of flex counter thread FC %s, took %d ms", m_instanceId.c_str(), delay);
         SWSS_LOG_DEBUG("End of flex counter thread FC %s, took %d ms", m_instanceId.c_str(), delay);
         std::unique_lock<std::mutex> lk(m_mtxSleep);
         m_cvSleep.wait_for(lk, std::chrono::milliseconds(m_pollInterval - correction));
