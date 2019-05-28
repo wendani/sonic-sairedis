@@ -339,29 +339,55 @@ sai_status_t redis_generic_get_stats_ext(
             counters);
 }
 
+sai_status_t internal_redis_generic_clear_stats(
+        _In_ sai_object_type_t object_type,
+        _In_ const std::string &serialized_object_id,
+        _In_ const sai_enum_metadata_t *stats_enum,
+        _In_ uint32_t count,
+        _In_ const int32_t *counter_id_list)
+{
+    SWSS_LOG_ENTER();
+
+    std::vector<swss::FieldValueTuple> fvTuples = serialize_counter_id_list(
+            stats_enum,
+            count,
+            counter_id_list);
+
+    std::string str_object_type = sai_serialize_object_type(object_type);
+
+    std::string key = str_object_type + ":" + serialized_object_id;
+
+    SWSS_LOG_ERROR("generic clear stats key: %s, fields: %lu", key.c_str(), fvTuples.size());
+    SWSS_LOG_DEBUG("generic clear stats key: %s, fields: %lu", key.c_str(), fvTuples.size());
+
+    if (g_record)
+    {
+        recordLine("m|" + key + "|" + joinFieldValues(fvTuples));
+    }
+
+    // clear is special, it will not put data
+    // into asic view, only to message queue
+    g_asicState->set(key, fvTuples, "clear_stats");
+
+    // wait for response
+
+}
+
 sai_status_t redis_generic_clear_stats(
         _In_ sai_object_type_t object_type,
         _In_ sai_object_id_t object_id,
-        _In_ const sai_enum_metadata_t *enum_metadata,
+        _In_ const sai_enum_metadata_t *enum_metadata_stats,
         _In_ uint32_t number_of_counters,
         _In_ const int32_t *counter_ids)
 {
     SWSS_LOG_ENTER();
 
-    /*
-     * Clear stats is the same as get stats ext with mode ==
-     * SAI_STATS_MODE_READ_AND_CLEAR and we just read counters locally and
-     * discard them, in that way.
-     */
+    std::string str_object_id = sai_serialize_object_id(object_id);
 
-    uint64_t counters[REDIS_MAX_COUNTERS];
-
-    return redis_generic_stats_function(
+    return internal_redis_generic_clear_stats(
             object_type,
-            object_id,
-            enum_metadata,
+            str_object_id,
+            enum_metadata_stats,
             number_of_counters,
-            counter_ids,
-            SAI_STATS_MODE_READ_AND_CLEAR,
-            counters);
+            counter_ids);
 }

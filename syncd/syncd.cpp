@@ -2616,6 +2616,10 @@ sai_status_t processEvent(
         {
             return processGetStatsEvent(kco);
         }
+        else if (op == "clear_stats")
+        {
+            return processClearStatsEvent(kco);
+        }
         else if (op == "flush")
         {
             return processFdbFlush(kco);
