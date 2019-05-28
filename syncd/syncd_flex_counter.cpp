@@ -836,16 +836,29 @@ bool FlexCounter::isEmpty()
 {
     SWSS_LOG_ENTER();
 
+    return isIdsEmpty() && isPluginsEmpty();
+}
+
+bool FlexCounter::isIdsEmpty()
+{
+    SWSS_LOG_ENTER();
+
     return m_priorityGroupCounterIdsMap.empty() &&
            m_priorityGroupAttrIdsMap.empty() &&
-           m_priorityGroupPlugins.empty() &&
            m_queueCounterIdsMap.empty() &&
+           m_queueAttrIdsMap.empty() &&
            m_portCounterIdsMap.empty() &&
            m_rifCounterIdsMap.empty() &&
-           m_queueAttrIdsMap.empty() &&
+           m_bufferPoolCounterIdsMap.empty();
+}
+
+bool FlexCounter::isPluginsEmpty()
+{
+    SWSS_LOG_ENTER();
+
+    return m_priorityGroupPlugins.empty() &&
            m_queuePlugins.empty() &&
            m_portPlugins.empty() &&
-           m_bufferPoolCounterIdsMap.empty() &&
            m_bufferPoolPlugins.empty();
 }
 
@@ -1308,7 +1321,7 @@ void FlexCounter::flexCounterThread(void)
         {
             return;
         }
-        while (!m_enable || isEmpty() || (m_pollInterval == 0))
+        while (!m_enable || isIdsEmpty() || (m_pollInterval == 0))
         {
             if (!m_runFlexCounterThread)
             {
@@ -1347,6 +1360,7 @@ void FlexCounter::startFlexCounterThread(void)
 
     m_flexCounterThread = std::make_shared<std::thread>(&FlexCounter::flexCounterThread, this);
 
+    SWSS_LOG_ERROR("Flex Counter thread started");
     SWSS_LOG_INFO("Flex Counter thread started");
 }
 
@@ -1370,11 +1384,13 @@ void FlexCounter::endFlexCounterThread(void)
     {
         std::shared_ptr<std::thread> fcThread = std::move(m_flexCounterThread);
         lkMgr.unlock();
+        SWSS_LOG_ERROR("Wait for Flex Counter thread to end");
         SWSS_LOG_INFO("Wait for Flex Counter thread to end");
 
         fcThread->join();
     }
 
+    SWSS_LOG_ERROR("Flex Counter thread ended");
     SWSS_LOG_INFO("Flex Counter thread ended");
 }
 
