@@ -1857,6 +1857,25 @@ sai_status_t getStatsGeneric(
             counters.data());
 }
 
+template <typename T, typename F, typename G>
+sai_status_t clearStatsGeneric(
+        _In_ sai_object_id_t object_id,
+        _In_ const swss::KeyOpFieldsValuesTuple &kco,
+        _In_ F clearStatsFn,
+        _In_ G deserializeIdFn)
+{
+    SWSS_LOG_ENTER();
+
+    const std::vector<T> counter_ids = extractCounterIdsGeneric<T>(
+            kco,
+            deserializeIdFn);
+
+    return clearStatsFn(
+            object_id,
+            static_cast<uint32_t>(counter_ids.size()),
+            counter_ids.data());
+}
+
 sai_status_t processGetStatsEvent(
         _In_ const swss::KeyOpFieldsValuesTuple &kco)
 {
@@ -1923,6 +1942,56 @@ sai_status_t processGetStatsEvent(
     }
 
     getResponse->set(sai_serialize_status(status), entry, "getresponse");
+
+    return status;
+}
+
+sai_status_t processClearStatsEvent(
+        _In_ const swss::KeyOpFieldsValuesTuple &kco)
+{
+    SWSS_LOG_ENTER();
+
+    const std::string &key = kfvKey(kco);
+    const std::string &str_object_type = key.substr(0, key.find(":"));
+    const std::string &str_object_id = key.substr(key.find(":") + 1);
+
+    sai_object_id_t object_id;
+    sai_deserialize_object_id(str_object_id, object_id);
+    sai_object_id_t rid = translate_vid_to_rid(object_id);
+
+    sai_object_type_t object_type;
+    sai_deserialize_object_type(str_object_type, object_type);
+
+    sai_status_t status = SAI_STATUS_FAILURE;
+    switch (object_type)
+    {
+        case SAI_OBJECT_TYPE_BUFFER_POOL:
+            status = clearStatsGeneric<sai_buffer_pool_stat_t>(
+                    rid,
+                    kco,
+                    sai_metadata_sai_buffer_api->clear_buffer_pool_stats,
+                    sai_deserialize_buffer_pool_stat);
+            break;
+        default:
+            SWSS_LOG_ERROR("SAI object type %s not supported", str_object_type.c_str());
+            status = SAI_STATUS_NOT_SUPPORTED;
+    }
+
+    std::vector<swss::FieldValueTuple> fvTuples;
+
+    if (status != SAI_STATUS_SUCCESS)
+    {
+        SWSS_LOG_ERROR("Failed to clear stats");
+    }
+    else
+    {
+        for (const auto &fv : kfvFieldsValues(kco))
+        {
+            fvTuples.emplace_back(fvField(fv), "");
+        }
+    }
+
+    getResponse->set(sai_serialize_status(status), fvTuples, "getresponse");
 
     return status;
 }
