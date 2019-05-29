@@ -179,6 +179,54 @@ sai_status_t internal_redis_get_stats_process(
     return status;
 }
 
+sai_status_t internal_redis_clear_stats_process(
+        _In_ sai_object_type_t object_type,
+        _In_ const sai_enum_metadata_t *stats_enum_metadata,
+        _In_ uint32_t count,
+        _In_ const int32_t *counter_id_list,
+        _In_ swss::KeyOpFieldsValuesTuple &kco)
+{
+    SWSS_LOG_ENTER();
+
+    // key:         sai_status
+    // field:       stat_id
+
+    const auto &key = kfvKey(kco);
+    const auto &fvTuples = kfvFieldsValues(kco);
+
+    if (fvTuples.size() != count)
+    {
+        SWSS_LOG_ERROR("Field count %zu not as expected %u", fvTuples.size(), count);
+        return SAI_STATUS_FAILURE;
+    }
+
+    sai_status_t status;
+    sai_deserialize_status(key, status);
+    if (status != SAI_STATUS_SUCCESS)
+    {
+        return status;
+    }
+
+    int32_t counter_id;
+    for (int i = 0; i < count; i++)
+    {
+        sai_deserialize_enum(fvField(fvTuples[i]), stats_enum_metadata, counter_id);
+        SWSS_LOG_ERROR("Counter id received %s, expected %s",
+            fvField(fvTuples[i]).c_str(),
+            sai_serialize_enum(counter_id_list[i], stats_enum_metadata).c_str());
+        if (counter_id != counter_id_list[i])
+        {
+            SWSS_LOG_ERROR("Counter id %s not as expected %s",
+                fvField(fvTuples[i]).c_str(),
+                sai_serialize_enum(counter_id_list[i], stats_enum_metadata).c_str());
+            status = SAI_STATUS_FAILURE;
+            break;
+        }
+    }
+
+    return status;
+}
+
 std::vector<swss::FieldValueTuple> serialize_counter_id_list(
         _In_ const sai_enum_metadata_t *stats_enum,
         _In_ uint32_t count,
@@ -354,7 +402,6 @@ sai_status_t internal_redis_generic_clear_stats(
             counter_id_list);
 
     std::string str_object_type = sai_serialize_object_type(object_type);
-
     std::string key = str_object_type + ":" + serialized_object_id;
 
     SWSS_LOG_ERROR("generic clear stats key: %s, fields: %lu", key.c_str(), fvTuples.size());
@@ -370,7 +417,59 @@ sai_status_t internal_redis_generic_clear_stats(
     g_asicState->set(key, fvTuples, "clear_stats");
 
     // wait for response
+    swss::Select s;
+    s.addSelectable(g_redisGetConsumer.get());
+    while (true)
+    {
+        SWSS_LOG_ERROR("wait for clear_stats response");
+        SWSS_LOG_DEBUG("wait for clear_stats response");
 
+        swss::Selectable *sel;
+        int result = s.select(&sel, GET_RESPONSE_TIMEOUT);
+        if (result == swss::Select::OBJECT)
+        {
+            swss::KeyOpFieldsValuesTuple kco;
+            g_redisGetConsumer->pop(kco);
+            const std::string &key = kfvKey(kco);
+            const std::string &op = kfvOp(kco);
+            SWSS_LOG_ERROR("response: key = %s, op = %s", key.c_str(), op.c_str());
+            SWSS_LOG_DEBUG("response: key = %s, op = %s", key.c_str(), op.c_str());
+
+            if (op != "getresponse") // ignore non response messages
+            {
+                continue;
+            }
+
+            if (g_record)
+            {
+                const auto &fvTuples = kfvFieldsValues(kco);
+
+                // first serialized is status return by sai clear_stats
+                recordLine("M|" + key + "|" + joinFieldValues(fvTuples));
+            }
+
+            sai_status_t status = internal_redis_clear_stats_process(
+                    object_type,
+                    stats_enum,
+                    count,
+                    counter_id_list,
+                    kco);
+            SWSS_LOG_ERROR("generic clear status: %s", sai_serialize_status(status).c_str());
+            SWSS_LOG_DEBUG("generic clear status: %s", sai_serialize_status(status).c_str());
+            return status;
+        }
+
+        SWSS_LOG_ERROR("generic get failed due to SELECT operation result");
+        break;
+    }
+
+    if (g_record)
+    {
+        recordLine("M|SAI_STATUS_FAILURE");
+    }
+
+    SWSS_LOG_ERROR("generic clear stats failed to get response");
+    return SAI_STATUS_FAILURE;
 }
 
 sai_status_t redis_generic_clear_stats(
