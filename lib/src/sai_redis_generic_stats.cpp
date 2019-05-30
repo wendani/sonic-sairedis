@@ -211,9 +211,6 @@ sai_status_t internal_redis_clear_stats_process(
     for (uint32_t i = 0; i < count; i++)
     {
         sai_deserialize_enum(fvField(fvTuples[i]), stats_enum_metadata, counter_id);
-        SWSS_LOG_ERROR("Counter id received %s, expected %s",
-            fvField(fvTuples[i]).c_str(),
-            sai_serialize_enum(counter_id_list[i], stats_enum_metadata).c_str());
         if (counter_id != counter_id_list[i])
         {
             SWSS_LOG_ERROR("Counter id %s not as expected %s",
@@ -404,7 +401,6 @@ sai_status_t internal_redis_generic_clear_stats(
     std::string str_object_type = sai_serialize_object_type(object_type);
     std::string key = str_object_type + ":" + serialized_object_id;
 
-    SWSS_LOG_ERROR("generic clear stats key: %s, fields: %lu", key.c_str(), fvTuples.size());
     SWSS_LOG_DEBUG("generic clear stats key: %s, fields: %lu", key.c_str(), fvTuples.size());
 
     if (g_record)
@@ -421,7 +417,6 @@ sai_status_t internal_redis_generic_clear_stats(
     s.addSelectable(g_redisGetConsumer.get());
     while (true)
     {
-        SWSS_LOG_ERROR("wait for clear_stats response");
         SWSS_LOG_DEBUG("wait for clear_stats response");
 
         swss::Selectable *sel;
@@ -432,7 +427,6 @@ sai_status_t internal_redis_generic_clear_stats(
             g_redisGetConsumer->pop(kco);
             const std::string &respKey = kfvKey(kco);
             const std::string &respOp = kfvOp(kco);
-            SWSS_LOG_ERROR("response: key = %s, op = %s", respKey.c_str(), respOp.c_str());
             SWSS_LOG_DEBUG("response: key = %s, op = %s", respKey.c_str(), respOp.c_str());
 
             if (respOp != "getresponse") // ignore non response messages
@@ -454,7 +448,6 @@ sai_status_t internal_redis_generic_clear_stats(
                     count,
                     counter_id_list,
                     kco);
-            SWSS_LOG_ERROR("generic clear stats status: %s", sai_serialize_status(status).c_str());
             SWSS_LOG_DEBUG("generic clear stats status: %s", sai_serialize_status(status).c_str());
             return status;
         }
