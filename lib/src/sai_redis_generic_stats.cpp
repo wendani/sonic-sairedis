@@ -208,7 +208,7 @@ sai_status_t internal_redis_clear_stats_process(
     }
 
     int32_t counter_id;
-    for (int i = 0; i < count; i++)
+    for (uint32_t i = 0; i < count; i++)
     {
         sai_deserialize_enum(fvField(fvTuples[i]), stats_enum_metadata, counter_id);
         SWSS_LOG_ERROR("Counter id received %s, expected %s",
@@ -430,22 +430,22 @@ sai_status_t internal_redis_generic_clear_stats(
         {
             swss::KeyOpFieldsValuesTuple kco;
             g_redisGetConsumer->pop(kco);
-            const std::string &key = kfvKey(kco);
-            const std::string &op = kfvOp(kco);
-            SWSS_LOG_ERROR("response: key = %s, op = %s", key.c_str(), op.c_str());
-            SWSS_LOG_DEBUG("response: key = %s, op = %s", key.c_str(), op.c_str());
+            const std::string &respKey = kfvKey(kco);
+            const std::string &respOp = kfvOp(kco);
+            SWSS_LOG_ERROR("response: key = %s, op = %s", respKey.c_str(), respOp.c_str());
+            SWSS_LOG_DEBUG("response: key = %s, op = %s", respKey.c_str(), respOp.c_str());
 
-            if (op != "getresponse") // ignore non response messages
+            if (respOp != "getresponse") // ignore non response messages
             {
                 continue;
             }
 
             if (g_record)
             {
-                const auto &fvTuples = kfvFieldsValues(kco);
+                const auto &respFvTuples = kfvFieldsValues(kco);
 
                 // first serialized is status return by sai clear_stats
-                recordLine("M|" + key + "|" + joinFieldValues(fvTuples));
+                recordLine("M|" + respKey + "|" + joinFieldValues(respFvTuples));
             }
 
             sai_status_t status = internal_redis_clear_stats_process(

@@ -1966,6 +1966,7 @@ sai_status_t processClearStatsEvent(
     switch (object_type)
     {
         case SAI_OBJECT_TYPE_BUFFER_POOL:
+            SWSS_LOG_ERROR("Object type %s, about to clear its stats", str_object_type.c_str());
             status = clearStatsGeneric<sai_buffer_pool_stat_t>(
                     rid,
                     kco,
@@ -2687,6 +2688,7 @@ sai_status_t processEvent(
         }
         else if (op == "clear_stats")
         {
+            SWSS_LOG_ERROR("Receive op: %s", op.c_str());
             return processClearStatsEvent(kco);
         }
         else if (op == "flush")
