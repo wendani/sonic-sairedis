@@ -3071,6 +3071,7 @@ void processFlexCounterEvent(
             }
             else if (objectType == SAI_OBJECT_TYPE_BUFFER_POOL && field == BUFFER_POOL_COUNTER_ID_LIST)
             {
+                SWSS_LOG_ERROR("About to set buffer pool counter list");
                 std::vector<sai_buffer_pool_stat_t> bufferPoolCounterIds;
                 for (const auto &str : idStrings)
                 {

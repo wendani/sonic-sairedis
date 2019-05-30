@@ -454,12 +454,12 @@ sai_status_t internal_redis_generic_clear_stats(
                     count,
                     counter_id_list,
                     kco);
-            SWSS_LOG_ERROR("generic clear status: %s", sai_serialize_status(status).c_str());
-            SWSS_LOG_DEBUG("generic clear status: %s", sai_serialize_status(status).c_str());
+            SWSS_LOG_ERROR("generic clear stats status: %s", sai_serialize_status(status).c_str());
+            SWSS_LOG_DEBUG("generic clear stats status: %s", sai_serialize_status(status).c_str());
             return status;
         }
 
-        SWSS_LOG_ERROR("generic get failed due to SELECT operation result");
+        SWSS_LOG_ERROR("generic clear stats failed due to SELECT operation result");
         break;
     }
 
