@@ -192,19 +192,18 @@ sai_status_t internal_redis_clear_stats_process(
     // field:       stat_id
 
     const auto &key = kfvKey(kco);
-    const auto &fvTuples = kfvFieldsValues(kco);
-
-    if (fvTuples.size() != count)
-    {
-        SWSS_LOG_ERROR("Field count %zu not as expected %u", fvTuples.size(), count);
-        return SAI_STATUS_FAILURE;
-    }
-
     sai_status_t status;
     sai_deserialize_status(key, status);
     if (status != SAI_STATUS_SUCCESS)
     {
         return status;
+    }
+
+    const auto &fvTuples = kfvFieldsValues(kco);
+    if (fvTuples.size() != count)
+    {
+        SWSS_LOG_ERROR("Field count %zu not as expected %u", fvTuples.size(), count);
+        return SAI_STATUS_FAILURE;
     }
 
     int32_t counter_id;
