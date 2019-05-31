@@ -14,15 +14,15 @@
 #include <map>
 #include <iterator>
 
-#define META_LOG_STATUS(s)\
+#define META_LOG_STATUS(op, s)\
     if (s == SAI_STATUS_SUCCESS)                                           \
-        SWSS_LOG_DEBUG("get status: %s", sai_serialize_status(s).c_str()); \
+        SWSS_LOG_DEBUG(#op " status: %s", sai_serialize_status(s).c_str()); \
     else if (s == SAI_STATUS_BUFFER_OVERFLOW                               \
                || SAI_STATUS_IS_ATTR_NOT_IMPLEMENTED(s)                    \
                || SAI_STATUS_IS_ATTR_NOT_SUPPORTED(s))                     \
-        SWSS_LOG_INFO("get status: %s", sai_serialize_status(s).c_str());  \
+        SWSS_LOG_INFO(#op " status: %s", sai_serialize_status(s).c_str());  \
     else                                                                   \
-        SWSS_LOG_ERROR("get status: %s", sai_serialize_status(s).c_str());
+        SWSS_LOG_ERROR(#op " status: %s", sai_serialize_status(s).c_str());
 
 static volatile bool unittests_enabled = false;
 
@@ -3804,7 +3804,7 @@ sai_status_t meta_sai_get_fdb_entry(
 
     status = get(fdb_entry, attr_count, attr_list);
 
-    META_LOG_STATUS(status);
+    META_LOG_STATUS(get, status);
 
     if (status == SAI_STATUS_SUCCESS)
     {
@@ -4082,7 +4082,7 @@ sai_status_t meta_sai_get_mcast_fdb_entry(
 
     status = get(mcast_fdb_entry, attr_count, attr_list);
 
-    META_LOG_STATUS(status);
+    META_LOG_STATUS(get, status);
 
     if (status == SAI_STATUS_SUCCESS)
     {
@@ -4370,7 +4370,7 @@ sai_status_t meta_sai_get_neighbor_entry(
 
     status = get(neighbor_entry, attr_count, attr_list);
 
-    META_LOG_STATUS(status);
+    META_LOG_STATUS(get, status);
 
     if (status == SAI_STATUS_SUCCESS)
     {
@@ -4670,7 +4670,7 @@ sai_status_t meta_sai_get_route_entry(
 
     status = get(route_entry, attr_count, attr_list);
 
-    META_LOG_STATUS(status);
+    META_LOG_STATUS(get, status);
 
     if (status == SAI_STATUS_SUCCESS)
     {
@@ -4986,7 +4986,7 @@ sai_status_t meta_sai_get_l2mc_entry(
 
     status = get(l2mc_entry, attr_count, attr_list);
 
-    META_LOG_STATUS(status);
+    META_LOG_STATUS(get, status);
 
     if (status == SAI_STATUS_SUCCESS)
     {
@@ -5302,7 +5302,7 @@ sai_status_t meta_sai_get_ipmc_entry(
 
     status = get(ipmc_entry, attr_count, attr_list);
 
-    META_LOG_STATUS(status);
+    META_LOG_STATUS(get, status);
 
     if (status == SAI_STATUS_SUCCESS)
     {
@@ -5512,7 +5512,7 @@ sai_status_t meta_sai_get_inseg_entry(
 
     status = get(inseg_entry, attr_count, attr_list);
 
-    META_LOG_STATUS(status);
+    META_LOG_STATUS(get, status);
 
     if (status == SAI_STATUS_SUCCESS)
     {
@@ -5803,7 +5803,7 @@ sai_status_t meta_sai_get_oid(
 
     status = get(object_type, object_id, attr_count, attr_list);
 
-    META_LOG_STATUS(status);
+    META_LOG_STATUS(get, status);
 
     if (status == SAI_STATUS_SUCCESS)
     {
@@ -5926,7 +5926,7 @@ sai_status_t meta_sai_get_stats_oid(
 
     status = get_stats(object_type, object_id, stats_enum, count, counter_id_list, counter_list);
 
-    META_LOG_STATUS(status);
+    META_LOG_STATUS(get, status);
 
     return status;
 }
@@ -6029,7 +6029,7 @@ sai_status_t meta_sai_clear_stats_oid(
 
     status = clear_stats(object_type, object_id, stats_enum, count, counter_id_list);
 
-    META_LOG_STATUS(status);
+    META_LOG_STATUS(clear, status);
 
     return status;
 }
