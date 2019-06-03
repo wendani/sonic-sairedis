@@ -207,7 +207,7 @@ class FlexCounter
         std::set<std::string> m_bufferPoolPlugins;
 
         bool m_runFlexCounterThread = false;
-        std::unique_ptr<std::thread> m_flexCounterThread = nullptr;
+        std::shared_ptr<std::thread> m_flexCounterThread = nullptr;
         std::mutex m_mtxSleep;
         std::condition_variable m_cvSleep;
 

@@ -1345,7 +1345,7 @@ void FlexCounter::startFlexCounterThread(void)
 
     m_runFlexCounterThread = true;
 
-    m_flexCounterThread = std::unique_ptr<std::thread>(new std::thread(&FlexCounter::flexCounterThread, this));
+    m_flexCounterThread = std::make_shared<std::thread>(&FlexCounter::flexCounterThread, this);
 
     SWSS_LOG_INFO("Flex Counter thread started");
 }
@@ -1368,7 +1368,7 @@ void FlexCounter::endFlexCounterThread(void)
 
     if (m_flexCounterThread != nullptr)
     {
-        std::unique_ptr<std::thread> fcThread = std::move(m_flexCounterThread);
+        std::shared_ptr<std::thread> fcThread = std::move(m_flexCounterThread);
         lkMgr.unlock();
         SWSS_LOG_INFO("Wait for Flex Counter thread to end");
 
