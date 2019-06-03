@@ -1957,12 +1957,23 @@ sai_status_t processClearStatsEvent(
 
     sai_object_id_t object_id;
     sai_deserialize_object_id(str_object_id, object_id);
-    sai_object_id_t rid = translate_vid_to_rid(object_id);
+    sai_object_id_t rid;
+    sai_status_t status = SAI_STATUS_FAILURE;
+    std::vector<swss::FieldValueTuple> fvTuples;
+    try
+    {
+        rid = translate_vid_to_rid(object_id);
+    }
+    catch (const std::exception &e)
+    {
+        SWSS_LOG_ERROR("VID %s to RID translation error: %s", str_object_id.c_str(), e.what());
+        status = SAI_STATUS_INVALID_OBJECT_ID;
+        getResponse->set(sai_serialize_status(status), fvTuples, "getresponse");
+        return status;
+    }
 
     sai_object_type_t object_type;
     sai_deserialize_object_type(str_object_type, object_type);
-
-    sai_status_t status = SAI_STATUS_FAILURE;
     switch (object_type)
     {
         case SAI_OBJECT_TYPE_BUFFER_POOL:
@@ -1977,8 +1988,6 @@ sai_status_t processClearStatsEvent(
             status = SAI_STATUS_NOT_SUPPORTED;
     }
 
-    std::vector<swss::FieldValueTuple> fvTuples;
-
     if (status != SAI_STATUS_SUCCESS)
     {
         SWSS_LOG_ERROR("Failed to clear stats");
@@ -1992,7 +2001,6 @@ sai_status_t processClearStatsEvent(
     }
 
     getResponse->set(sai_serialize_status(status), fvTuples, "getresponse");
-
     return status;
 }
 
