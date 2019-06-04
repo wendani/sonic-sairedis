@@ -1360,7 +1360,6 @@ void FlexCounter::startFlexCounterThread(void)
 
     m_flexCounterThread = std::make_shared<std::thread>(&FlexCounter::flexCounterThread, this);
 
-    SWSS_LOG_ERROR("Flex Counter thread started");
     SWSS_LOG_INFO("Flex Counter thread started");
 }
 
@@ -1384,13 +1383,11 @@ void FlexCounter::endFlexCounterThread(void)
     {
         std::shared_ptr<std::thread> fcThread = std::move(m_flexCounterThread);
         lkMgr.unlock();
-        SWSS_LOG_ERROR("Wait for Flex Counter thread to end");
         SWSS_LOG_INFO("Wait for Flex Counter thread to end");
 
         fcThread->join();
     }
 
-    SWSS_LOG_ERROR("Flex Counter thread ended");
     SWSS_LOG_INFO("Flex Counter thread ended");
 }
 
