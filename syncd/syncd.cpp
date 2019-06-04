@@ -628,6 +628,24 @@ sai_object_id_t translate_vid_to_rid(
     return rid;
 }
 
+bool try_translate_vid_to_rid(
+        _In_ sai_object_id_t vid,
+        _Out_ sai_object_id_t& rid)
+{
+    SWSS_LOG_ENTER();
+
+    try
+    {
+        rid = translate_vid_to_rid(vid);
+        return true;
+    }
+    catch (const std::exception& e)
+    {
+        // message was logged already when throwing
+        return false;
+    }
+}
+
 void translate_list_vid_to_rid(
         _In_ sai_object_list_t &element)
 {
@@ -1832,7 +1850,7 @@ std::vector<T> extractCounterIdsGeneric(
         counterIdList.push_back(counterId);
     }
 
-    return std::move(counterIdList);
+    return counterIdList;
 }
 
 template <typename T, typename F, typename G>
@@ -2859,9 +2877,11 @@ void processFlexCounterGroupEvent(
 {
     SWSS_LOG_ENTER();
 
-    std::lock_guard<std::mutex> lock(g_mutex);
     swss::KeyOpFieldsValuesTuple kco;
-    consumer.pop(kco);
+    {
+        std::lock_guard<std::mutex> lock(g_mutex);
+        consumer.pop(kco);
+    }
 
     const auto &groupName = kfvKey(kco);
     const auto &op = kfvOp(kco);
@@ -2937,13 +2957,14 @@ void processFlexCounterEvent(
 {
     SWSS_LOG_ENTER();
 
-    std::lock_guard<std::mutex> lock(g_mutex);
-
     swss::KeyOpFieldsValuesTuple kco;
-    consumer.pop(kco);
+    {
+        std::lock_guard<std::mutex> lock(g_mutex);
+        consumer.pop(kco);
+    }
 
     const auto &key = kfvKey(kco);
-    const auto &op = kfvOp(kco);
+    std::string &op = kfvOp(kco);
 
     std::size_t delimiter = key.find_first_of(":");
     if (delimiter == std::string::npos)
@@ -2957,8 +2978,17 @@ void processFlexCounterEvent(
 
     sai_object_id_t vid = SAI_NULL_OBJECT_ID;
     sai_deserialize_object_id(vidStr, vid);
-    sai_object_id_t rid = translate_vid_to_rid(vid);
-    sai_object_type_t objectType = sai_object_type_query(rid);
+    sai_object_id_t rid;
+
+    if (!try_translate_vid_to_rid(vid, rid))
+    {
+        SWSS_LOG_WARN("port VID %s, was not found (probably port was removed/splitted) and will remove from counters now", 
+                sai_serialize_object_id(vid).c_str());
+
+        op = DEL_COMMAND;
+    }
+
+    sai_object_type_t objectType = redis_sai_object_type_query(vid); // VID and RID will have the same object type
     std::string  objectTypeStr = sai_serialize_object_type(objectType);
 
     if (op == DEL_COMMAND)
