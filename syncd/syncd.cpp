@@ -1960,13 +1960,9 @@ sai_status_t processClearStatsEvent(
     sai_object_id_t rid;
     sai_status_t status = SAI_STATUS_FAILURE;
     std::vector<swss::FieldValueTuple> fvTuples;
-    try
+    if (!try_translate_vid_to_rid(object_id, rid))
     {
-        rid = translate_vid_to_rid(object_id);
-    }
-    catch (const std::exception &e)
-    {
-        SWSS_LOG_ERROR("VID %s to RID translation error: %s", str_object_id.c_str(), e.what());
+        SWSS_LOG_ERROR("VID %s to RID translation error", str_object_id.c_str());
         status = SAI_STATUS_INVALID_OBJECT_ID;
         getResponse->set(sai_serialize_status(status), fvTuples, "getresponse");
         return status;
