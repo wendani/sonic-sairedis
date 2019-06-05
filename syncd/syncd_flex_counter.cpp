@@ -836,10 +836,10 @@ bool FlexCounter::isEmpty()
 {
     SWSS_LOG_ENTER();
 
-    return isIdsEmpty() && isPluginsEmpty();
+    return allIdsEmpty() && allPluginsEmpty();
 }
 
-bool FlexCounter::isIdsEmpty()
+bool FlexCounter::allIdsEmpty()
 {
     SWSS_LOG_ENTER();
 
@@ -852,7 +852,7 @@ bool FlexCounter::isIdsEmpty()
            m_bufferPoolCounterIdsMap.empty();
 }
 
-bool FlexCounter::isPluginsEmpty()
+bool FlexCounter::allPluginsEmpty()
 {
     SWSS_LOG_ENTER();
 
@@ -1321,7 +1321,7 @@ void FlexCounter::flexCounterThread(void)
         {
             return;
         }
-        while (!m_enable || isIdsEmpty() || (m_pollInterval == 0))
+        while (!m_enable || allIdsEmpty() || (m_pollInterval == 0))
         {
             if (!m_runFlexCounterThread)
             {
