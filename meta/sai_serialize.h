@@ -165,11 +165,6 @@ void sai_deserialize_number(
         _Out_ uint32_t& number,
         _In_ bool hex = false);
 
-void sai_deserialize_enum(
-        _In_ const std::string& s,
-        _In_ const sai_enum_metadata_t *meta,
-        _Out_ int32_t& value);
-
 void sai_deserialize_status(
         _In_ const std::string& s,
         _Out_ sai_status_t& status);
@@ -281,10 +276,6 @@ void sai_deserialize_free_queue_deadlock_ntf(
 void sai_deserialize_ingress_priority_group_attr(
         _In_ const std::string& s,
         _Out_ sai_ingress_priority_group_attr_t& attr);
-
-void sai_deserialize_buffer_pool_stat(
-        _In_ const std::string& s,
-        _Out_ sai_buffer_pool_stat_t& stat);
 
 void sai_deserialize_queue_attr(
         _In_ const std::string& s,

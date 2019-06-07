@@ -209,7 +209,7 @@ sai_status_t internal_redis_clear_stats_process(
     int32_t counter_id;
     for (uint32_t i = 0; i < count; i++)
     {
-        sai_deserialize_enum(fvField(fvTuples[i]), stats_enum_metadata, counter_id);
+        sai_deserialize_enum(fvField(fvTuples[i]).c_str(), stats_enum_metadata, &counter_id);
         if (counter_id != counter_id_list[i])
         {
             SWSS_LOG_ERROR("Counter id %s not as expected %s",

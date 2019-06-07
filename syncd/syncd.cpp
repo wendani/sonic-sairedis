@@ -1891,7 +1891,7 @@ sai_status_t clearStatsGeneric(
     return clearStatsFn(
             object_id,
             static_cast<uint32_t>(counter_ids.size()),
-            counter_ids.data());
+            reinterpret_cast<const sai_stat_id_t *>(counter_ids.data()));
 }
 
 sai_status_t processGetStatsEvent(
@@ -3107,7 +3107,7 @@ void processFlexCounterEvent(
                 for (const auto &str : idStrings)
                 {
                     sai_buffer_pool_stat_t stat;
-                    sai_deserialize_buffer_pool_stat(str, stat);
+                    sai_deserialize_buffer_pool_stat(str.c_str(), &stat);
                     bufferPoolCounterIds.push_back(stat);
                 }
 
