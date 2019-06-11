@@ -136,7 +136,7 @@ sai_status_t sai_api_initialize(
 
     SWSS_LOG_DEBUG("creating notification thread");
 
-    notification_thread = std::make_shared<std::thread>(std::thread(ntf_thread));
+    notification_thread = std::make_shared<std::thread>(ntf_thread);
 
     g_apiInitialized = true;
 
