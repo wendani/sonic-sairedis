@@ -146,6 +146,7 @@ class FlexCounter
                 _In_ const std::vector<sai_buffer_pool_stat_t> &bufferPoolIds);
 
             sai_object_id_t bufferPoolId;
+            sai_stats_mode_t statsMode;
             std::vector<sai_buffer_pool_stat_t> bufferPoolCounterIds;
         };
 

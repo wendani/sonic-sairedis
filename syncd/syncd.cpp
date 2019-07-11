@@ -2902,6 +2902,7 @@ void processFlexCounterGroupEvent(
         {
             if (field == POLL_INTERVAL_FIELD)
             {
+                SWSS_LOG_ERROR("groupName: %s, field: %s, value: %s", groupName.c_str(), field.c_str(), value.c_str());
                 FlexCounter::setPollInterval(stoi(value), groupName);
             }
             else if (field == QUEUE_PLUGIN_FIELD)
@@ -2930,6 +2931,7 @@ void processFlexCounterGroupEvent(
             }
             else if (field == BUFFER_POOL_PLUGIN_FIELD)
             {
+                SWSS_LOG_ERROR("groupName: %s, field: %s, value: %s", groupName.c_str(), field.c_str(), value.c_str());
                 auto shaStrings = swss::tokenize(value, ',');
                 for (const auto &sha : shaStrings)
                 {
@@ -2938,10 +2940,12 @@ void processFlexCounterGroupEvent(
             }
             else if (field == FLEX_COUNTER_STATUS_FIELD)
             {
+                SWSS_LOG_ERROR("groupName: %s, field: %s, value: %s", groupName.c_str(), field.c_str(), value.c_str());
                 FlexCounter::updateFlexCounterStatus(value, groupName);
             }
             else if (field == STATS_MODE_FIELD)
             {
+                SWSS_LOG_ERROR("groupName: %s, field: %s, value: %s", groupName.c_str(), field.c_str(), value.c_str());
                 FlexCounter::updateFlexCounterStatsMode(value, groupName);
             }
             else
