@@ -3024,8 +3024,8 @@ void processFlexCounterEvent(
     }
 
     const auto values = kfvFieldsValues(kco);
-    vector<string> counterIds;
-    string statsMode;
+    std::vector<std::string> counterIds;
+    std::string statsMode;
     for (const auto& valuePair : values)
     {
         const auto field = fvField(valuePair);

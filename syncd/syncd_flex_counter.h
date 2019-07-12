@@ -41,7 +41,7 @@ class FlexCounter
                 _In_ sai_object_id_t bufferPoolVid,
                 _In_ sai_object_id_t bufferPoolId,
                 _In_ const std::string &instanceId,
-                _In_ const std::vector<sai_buffer_pool_stat_t> &counterIds
+                _In_ const std::vector<sai_buffer_pool_stat_t> &counterIds,
                 _In_ const std::string &statsMode = "");
         static void setQueueAttrList(
                 _In_ sai_object_id_t queueVid,
@@ -144,8 +144,8 @@ class FlexCounter
         {
             BufferPoolCounterIds(
                 _In_ sai_object_id_t bufferPool,
-                _In_ const std::vector<sai_buffer_pool_stat_t> &bufferPoolIds
-                _IN_ statsMode);
+                _In_ const std::vector<sai_buffer_pool_stat_t> &bufferPoolIds,
+                _In_ sai_stats_mode_t statsMode);
 
             sai_object_id_t bufferPoolId;
             sai_stats_mode_t bufferPoolStatsMode;

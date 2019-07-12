@@ -61,8 +61,9 @@ FlexCounter::RifCounterIds::RifCounterIds(
 
 FlexCounter::BufferPoolCounterIds::BufferPoolCounterIds(
         _In_ sai_object_id_t bufferPool,
-        _In_ const std::vector<sai_buffer_pool_stat_t> &bufferPoolIds):
-    bufferPoolId(bufferPool), bufferPoolCounterIds(bufferPoolIds), bufferPoolStatsMode(statsMode)
+        _In_ const std::vector<sai_buffer_pool_stat_t> &bufferPoolIds,
+        _In_ sai_stats_mode_t statsMode):
+    bufferPoolId(bufferPool), bufferPoolStatsMode(statsMode), bufferPoolCounterIds(bufferPoolIds)
 {
     SWSS_LOG_ENTER();
 }
@@ -472,21 +473,21 @@ void FlexCounter::setBufferPoolCounterList(
     FlexCounter &fc = getInstance(instanceId);
 
     sai_stats_mode_t bufferPoolStatsMode = SAI_STATS_MODE_READ_AND_CLEAR;
-    switch (statsMode)
+    if (statsMode == STATS_MODE_READ_AND_CLEAR)
     {
-        case STATS_MODE_READ_AND_CLEAR:
-            bufferPoolStatsMode = SAI_STATS_MODE_READ_AND_CLEAR;
-            SWSS_LOG_ERROR("Set stats mode %s for FC %s buffer pool %s",
-                mode.c_str(), instanceId.c_str(), sai_serialize_object_id(bufferPoolId).c_str());
-            break;
-        case STATS_MODE_READ:
-            bufferPoolStatsMode = SAI_STATS_MODE_READ;
-            SWSS_LOG_ERROR("Set stats mode %s for FC %s buffer pool %s",
-                mode.c_str(), instanceId.c_str(), sai_serialize_object_id(bufferPoolId).c_str());
-            break;
-        default:
-            SWSS_LOG_WARN("Stats mode %s not supported for flex counter. Using STATS_MODE_READ_AND_CLEAR", statsMode.c_str());
-            break;
+        bufferPoolStatsMode = SAI_STATS_MODE_READ_AND_CLEAR;
+        SWSS_LOG_ERROR("Set stats mode %s for FC %s buffer pool %s",
+            statsMode.c_str(), instanceId.c_str(), sai_serialize_object_id(bufferPoolId).c_str());
+    }
+    else if (statsMode == STATS_MODE_READ)
+    {
+        bufferPoolStatsMode = SAI_STATS_MODE_READ;
+        SWSS_LOG_ERROR("Set stats mode %s for FC %s buffer pool %s",
+            statsMode.c_str(), instanceId.c_str(), sai_serialize_object_id(bufferPoolId).c_str());
+    }
+    else
+    {
+        SWSS_LOG_WARN("Stats mode %s not supported for flex counter. Using STATS_MODE_READ_AND_CLEAR", statsMode.c_str());
     }
 
     fc.saiUpdateSupportedBufferPoolCounters(bufferPoolId, counterIds, bufferPoolStatsMode);
@@ -1213,7 +1214,7 @@ void FlexCounter::collectCounters(
         const auto &bufferPoolVid = it.first;
         const auto &bufferPoolId = it.second->bufferPoolId;
         const auto &bufferPoolCounterIds = it.second->bufferPoolCounterIds;
-        const auto &bufferPoolStatsMode = it.second>bufferPoolStatsMode;
+        const auto &bufferPoolStatsMode = it.second->bufferPoolStatsMode;
 
         std::vector<uint64_t> bufferPoolStats(bufferPoolCounterIds.size());
 
