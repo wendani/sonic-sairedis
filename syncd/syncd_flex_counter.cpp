@@ -476,14 +476,10 @@ void FlexCounter::setBufferPoolCounterList(
     if (statsMode == STATS_MODE_READ_AND_CLEAR)
     {
         bufferPoolStatsMode = SAI_STATS_MODE_READ_AND_CLEAR;
-        SWSS_LOG_ERROR("Set stats mode %s for FC %s buffer pool %s",
-            statsMode.c_str(), instanceId.c_str(), sai_serialize_object_id(bufferPoolId).c_str());
     }
     else if (statsMode == STATS_MODE_READ)
     {
         bufferPoolStatsMode = SAI_STATS_MODE_READ;
-        SWSS_LOG_ERROR("Set stats mode %s for FC %s buffer pool %s",
-            statsMode.c_str(), instanceId.c_str(), sai_serialize_object_id(bufferPoolId).c_str());
     }
     else
     {
