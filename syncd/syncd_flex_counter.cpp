@@ -188,7 +188,7 @@ void FlexCounter::setPortCounterList(
     auto portCounterIds = std::make_shared<PortCounterIds>(portId, supportedIds);
     fc.m_portCounterIdsMap.emplace(portVid, portCounterIds);
 
-    fc.m_collectCountersHandlers.insert(collectPortCounters);
+    fc.m_collectCountersHandlers.insert(&FlexCounter::collectPortCounters);
 
     // Start flex counter thread in case it was not running due to empty counter IDs map
     if (fc.m_pollInterval > 0)
@@ -265,7 +265,7 @@ void FlexCounter::setQueueCounterList(
     auto queueCounterIds = std::make_shared<QueueCounterIds>(queueId, supportedIds);
     fc.m_queueCounterIdsMap.emplace(queueVid, queueCounterIds);
 
-    fc.m_collectCountersHandlers.insert(collectQueueCounters);
+    fc.m_collectCountersHandlers.insert(&FlexCounter::collectQueueCounters);
 
     // Start flex counter thread in case it was not running due to empty counter IDs map
     if (fc.m_pollInterval > 0)
@@ -296,7 +296,7 @@ void FlexCounter::setQueueAttrList(
     auto queueAttrIds = std::make_shared<QueueAttrIds>(queueId, attrIds);
     fc.m_queueAttrIdsMap.emplace(queueVid, queueAttrIds);
 
-    fc.m_collectCountersHandlers.insert(collectQueueAttrs);
+    fc.m_collectCountersHandlers.insert(&FlexCounter::collectQueueAttrs);
 
     // Start flex counter thread in case it was not running due to empty counter IDs map
     if (fc.m_pollInterval > 0)
@@ -373,7 +373,7 @@ void FlexCounter::setPriorityGroupCounterList(
     auto priorityGroupCounterIds = std::make_shared<IngressPriorityGroupCounterIds>(priorityGroupId, supportedIds);
     fc.m_priorityGroupCounterIdsMap.emplace(priorityGroupVid, priorityGroupCounterIds);
 
-    fc.m_collectCountersHandlers.insert(collectPriorityGroupCounters);
+    fc.m_collectCountersHandlers.insert(&FlexCounter::collectPriorityGroupCounters);
 
     // Start flex counter thread in case it was not running due to empty counter IDs map
     if (fc.m_pollInterval > 0)
@@ -404,7 +404,7 @@ void FlexCounter::setPriorityGroupAttrList(
     auto priorityGroupAttrIds = std::make_shared<IngressPriorityGroupAttrIds>(priorityGroupId, attrIds);
     fc.m_priorityGroupAttrIdsMap.emplace(priorityGroupVid, priorityGroupAttrIds);
 
-    fc.m_collectCountersHandlers.insert(collectPriorityGroupAttrs);
+    fc.m_collectCountersHandlers.insert(&FlexCounter::collectPriorityGroupAttrs);
 
     // Start flex counter thread in case it was not running due to empty counter IDs map
     if (fc.m_pollInterval > 0)
@@ -464,7 +464,7 @@ void FlexCounter::setRifCounterList(
     auto rifCounterIds = std::make_shared<RifCounterIds>(rifId, supportedIds);
     fc.m_rifCounterIdsMap.emplace(rifVid, rifCounterIds);
 
-    fc.m_collectCountersHandlers.insert(collectRifCounters);
+    fc.m_collectCountersHandlers.insert(&FlexCounter::collectRifCounters);
 
     // Start flex counter thread in case it was not running due to empty counter IDs map
     if (fc.m_pollInterval > 0)
@@ -535,7 +535,7 @@ void FlexCounter::setBufferPoolCounterList(
     auto bufferPoolCounterIds = std::make_shared<BufferPoolCounterIds>(bufferPoolId, supportedIds, bufferPoolStatsMode);
     fc.m_bufferPoolCounterIdsMap.emplace(bufferPoolVid, bufferPoolCounterIds);
 
-    fc.m_collectCountersHandlers.insert(collectBufferPoolCounters);
+    fc.m_collectCountersHandlers.insert(&FlexCounter::collectBufferPoolCounters);
 
     // Start flex counter thread in case it was not running due to empty counter IDs map
     if (fc.m_pollInterval > 0)
@@ -571,8 +571,8 @@ void FlexCounter::removePort(
     fc.m_portCounterIdsMap.erase(it);
     if (!fc.m_portCounterIdsMap.size())
     {
-        fc.m_collectCountersHandlers.erase(collectPortCounters);
-    {
+        fc.m_collectCountersHandlers.erase(&FlexCounter::collectPortCounters);
+    }
 
     // Remove flex counter if all counter IDs and plugins are unregistered
     if (fc.isEmpty())
@@ -599,7 +599,7 @@ void FlexCounter::removeQueue(
         fc.m_queueCounterIdsMap.erase(counterIter);
         if (!fc.m_queueCounterIdsMap.size())
         {
-            fc.m_collectCountersHandlers.erase(collectQueueCounters);
+            fc.m_collectCountersHandlers.erase(&FlexCounter::collectQueueCounters);
         }
         found = true;
     }
@@ -610,7 +610,7 @@ void FlexCounter::removeQueue(
         fc.m_queueAttrIdsMap.erase(attrIter);
         if (!fc.m_queueAttrIdsMap.size())
         {
-            fc.m_collectCountersHandlers.erase(collectQueueAttrs);
+            fc.m_collectCountersHandlers.erase(&FlexCounter::collectQueueAttrs);
         }
         found = true;
     }
@@ -646,7 +646,7 @@ void FlexCounter::removePriorityGroup(
         fc.m_priorityGroupCounterIdsMap.erase(counterIter);
         if (!fc.m_priorityGroupCounterIdsMap.size())
         {
-            fc.m_collectCountersHandlers.erase(collectPriorityGroupCounters);
+            fc.m_collectCountersHandlers.erase(&FlexCounter::collectPriorityGroupCounters);
         }
         found = true;
     }
@@ -657,7 +657,7 @@ void FlexCounter::removePriorityGroup(
         fc.m_priorityGroupAttrIdsMap.erase(attrIter);
         if (!fc.m_priorityGroupAttrIdsMap.size())
         {
-            fc.m_collectCountersHandlers.erase(collectPriorityGroupAttrs);
+            fc.m_collectCountersHandlers.erase(&FlexCounter::collectPriorityGroupAttrs);
         }
         found = true;
     }
@@ -703,7 +703,7 @@ void FlexCounter::removeRif(
     fc.m_rifCounterIdsMap.erase(it);
     if (!fc.m_rifCounterIdsMap.size())
     {
-        fc.m_collectCountersHandlers.erase(collectRifCounters);
+        fc.m_collectCountersHandlers.erase(&FlexCounter::collectRifCounters);
     }
 
     // Remove flex counter if all counter IDs and plugins are unregistered
@@ -731,7 +731,7 @@ void FlexCounter::removeBufferPool(
         fc.m_bufferPoolCounterIdsMap.erase(it);
         if (!fc.m_bufferPoolCounterIdsMap.size())
         {
-            fc.m_collectCountersHandlers.erase(collectBufferPoolCounters);
+            fc.m_collectCountersHandlers.erase(&FlexCounter::collectBufferPoolCounters);
         }
         found = true;
     }
@@ -987,8 +987,9 @@ void FlexCounter::collectCounters(
 {
     SWSS_LOG_ENTER();
 
-    for (const auto &collectCountersHandler : m_collectCountersHandlers) {
-        collectCountersHandler(countersTable);
+    for (const auto &collectCountersHandler : m_collectCountersHandlers)
+    {
+        (this->*collectCountersHandler)(countersTable);
     }
 
     countersTable.flush();

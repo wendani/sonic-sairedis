@@ -9,6 +9,7 @@ extern "C" {
 #include <vector>
 #include <set>
 #include <condition_variable>
+#include <unordered_set>
 #include "swss/table.h"
 
 class FlexCounter
@@ -198,7 +199,7 @@ class FlexCounter
         bool allIdsEmpty();
         bool allPluginsEmpty();
 
-        typedef void (*collectCountersHandler_t)(_In_ swss::Table &countersTable);
+        typedef void (FlexCounter::*collectCountersHandler_t)(_In_ swss::Table &countersTable);
 
         void collectPortCounters(_In_ swss::Table &countersTable);
         void collectQueueCounters(_In_ swss::Table &countersTable);
