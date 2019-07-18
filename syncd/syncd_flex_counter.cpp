@@ -997,6 +997,8 @@ void FlexCounter::collectCounters(
 
 void FlexCounter::collectPortCounters(_In_ swss::Table &countersTable)
 {
+    SWSS_LOG_ENTER();
+
     // Collect stats for every registered port
     for (const auto &kv: m_portCounterIdsMap)
     {
@@ -1036,6 +1038,8 @@ void FlexCounter::collectPortCounters(_In_ swss::Table &countersTable)
 
 void FlexCounter::collectQueueCounters(_In_ swss::Table &countersTable)
 {
+    SWSS_LOG_ENTER();
+
     // Collect stats for every registered queue
     for (const auto &kv: m_queueCounterIdsMap)
     {
@@ -1095,6 +1099,8 @@ void FlexCounter::collectQueueCounters(_In_ swss::Table &countersTable)
 
 void FlexCounter::collectQueueAttrs(_In_ swss::Table &countersTable)
 {
+    SWSS_LOG_ENTER();
+
     // Collect attrs for every registered queue
     for (const auto &kv: m_queueAttrIdsMap)
     {
@@ -1140,6 +1146,8 @@ void FlexCounter::collectQueueAttrs(_In_ swss::Table &countersTable)
 
 void FlexCounter::collectPriorityGroupCounters(_In_ swss::Table &countersTable)
 {
+    SWSS_LOG_ENTER();
+
     // Collect stats for every registered ingress priority group
     for (const auto &kv: m_priorityGroupCounterIdsMap)
     {
@@ -1192,6 +1200,8 @@ void FlexCounter::collectPriorityGroupCounters(_In_ swss::Table &countersTable)
 
 void FlexCounter::collectPriorityGroupAttrs(_In_ swss::Table &countersTable)
 {
+    SWSS_LOG_ENTER();
+
     // Collect attrs for every registered priority group
     for (const auto &kv: m_priorityGroupAttrIdsMap)
     {
@@ -1237,6 +1247,8 @@ void FlexCounter::collectPriorityGroupAttrs(_In_ swss::Table &countersTable)
 
 void FlexCounter::collectRifCounters(_In_ swss::Table &countersTable)
 {
+    SWSS_LOG_ENTER();
+
     // Collect stats for every registered router interface
     for (const auto &kv: m_rifCounterIdsMap)
     {
@@ -1276,6 +1288,8 @@ void FlexCounter::collectRifCounters(_In_ swss::Table &countersTable)
 
 void FlexCounter::collectBufferPoolCounters(_In_ swss::Table &countersTable)
 {
+    SWSS_LOG_ENTER();
+
     // Collect stats for every registered buffer pool
     for (const auto &it : m_bufferPoolCounterIdsMap)
     {
