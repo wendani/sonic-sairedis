@@ -9,7 +9,7 @@ extern "C" {
 #include <vector>
 #include <set>
 #include <condition_variable>
-#include <unordered_set>
+#include <unordered_map>
 #include "swss/table.h"
 
 class FlexCounter
@@ -199,7 +199,8 @@ class FlexCounter
         bool allIdsEmpty();
         bool allPluginsEmpty();
 
-        typedef void (FlexCounter::*collectCountersHandler_t)(_In_ swss::Table &countersTable);
+        typedef void (FlexCounter::*collect_counters_handler_t)(_In_ swss::Table &countersTable);
+        typedef std::unordered_map<std::string, collect_counters_handler_t> collect_counters_handler_unordered_map_t;
 
         void collectPortCounters(_In_ swss::Table &countersTable);
         void collectQueueCounters(_In_ swss::Table &countersTable);
@@ -236,7 +237,7 @@ class FlexCounter
         sai_stats_mode_t m_statsMode;
         bool m_enable = false;
 
-        std::unordered_set<collectCountersHandler_t> m_collectCountersHandlers;
+        collect_counters_handler_unordered_map_t m_collectCountersHandlers;
 };
 
 #endif
