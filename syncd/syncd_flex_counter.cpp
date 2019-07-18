@@ -987,8 +987,10 @@ void FlexCounter::collectCounters(
 {
     SWSS_LOG_ENTER();
 
+    SWSS_LOG_ERROR("Flex counter instance: %s", m_instanceId.c_str());
     for (const auto &it : m_collectCountersHandlers)
     {
+        SWSS_LOG_ERROR("Collect type: %s", it.first.c_str());
         (this->*(it.second))(countersTable);
     }
 
