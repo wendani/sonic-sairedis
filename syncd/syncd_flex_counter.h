@@ -198,6 +198,16 @@ class FlexCounter
         bool allIdsEmpty();
         bool allPluginsEmpty();
 
+        typedef void (*collectCountersHandler_t)(_In_ swss::Table &countersTable);
+
+        void collectPortCounters(_In_ swss::Table &countersTable);
+        void collectQueueCounters(_In_ swss::Table &countersTable);
+        void collectQueueAttrs(_In_ swss::Table &countersTable);
+        void collectPriorityGroupCounters(_In_ swss::Table &countersTable);
+        void collectPriorityGroupAttrs(_In_ swss::Table &countersTable);
+        void collectRifCounters(_In_ swss::Table &countersTable);
+        void collectBufferPoolCounters(_In_ swss::Table &countersTable);
+
         // Key is a Virtual ID
         std::map<sai_object_id_t, std::shared_ptr<PortCounterIds>> m_portCounterIdsMap;
         std::map<sai_object_id_t, std::shared_ptr<QueueCounterIds>> m_queueCounterIdsMap;
@@ -224,6 +234,8 @@ class FlexCounter
         std::string m_instanceId;
         sai_stats_mode_t m_statsMode;
         bool m_enable = false;
+
+        std::unordered_set<collectCountersHandler_t> m_collectCountersHandlers;
 };
 
 #endif
