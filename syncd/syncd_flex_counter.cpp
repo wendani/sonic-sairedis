@@ -569,7 +569,7 @@ void FlexCounter::removePort(
     }
 
     fc.m_portCounterIdsMap.erase(it);
-    if (!fc.m_portCounterIdsMap.size())
+    if (fc.m_portCounterIdsMap.empty())
     {
         fc.m_collectCountersHandlers.erase(PORT_COUNTER_ID_LIST);
     }
@@ -597,7 +597,7 @@ void FlexCounter::removeQueue(
     if (counterIter != fc.m_queueCounterIdsMap.end())
     {
         fc.m_queueCounterIdsMap.erase(counterIter);
-        if (!fc.m_queueCounterIdsMap.size())
+        if (fc.m_queueCounterIdsMap.empty())
         {
             fc.m_collectCountersHandlers.erase(QUEUE_COUNTER_ID_LIST);
         }
@@ -608,7 +608,7 @@ void FlexCounter::removeQueue(
     if (attrIter != fc.m_queueAttrIdsMap.end())
     {
         fc.m_queueAttrIdsMap.erase(attrIter);
-        if (!fc.m_queueAttrIdsMap.size())
+        if (fc.m_queueAttrIdsMap.empty())
         {
             fc.m_collectCountersHandlers.erase(QUEUE_ATTR_ID_LIST);
         }
@@ -644,7 +644,7 @@ void FlexCounter::removePriorityGroup(
     if (counterIter != fc.m_priorityGroupCounterIdsMap.end())
     {
         fc.m_priorityGroupCounterIdsMap.erase(counterIter);
-        if (!fc.m_priorityGroupCounterIdsMap.size())
+        if (fc.m_priorityGroupCounterIdsMap.empty())
         {
             fc.m_collectCountersHandlers.erase(PG_COUNTER_ID_LIST);
         }
@@ -655,7 +655,7 @@ void FlexCounter::removePriorityGroup(
     if (attrIter != fc.m_priorityGroupAttrIdsMap.end())
     {
         fc.m_priorityGroupAttrIdsMap.erase(attrIter);
-        if (!fc.m_priorityGroupAttrIdsMap.size())
+        if (fc.m_priorityGroupAttrIdsMap.empty())
         {
             fc.m_collectCountersHandlers.erase(PG_ATTR_ID_LIST);
         }
@@ -701,7 +701,7 @@ void FlexCounter::removeRif(
     }
 
     fc.m_rifCounterIdsMap.erase(it);
-    if (!fc.m_rifCounterIdsMap.size())
+    if (fc.m_rifCounterIdsMap.empty())
     {
         fc.m_collectCountersHandlers.erase(RIF_COUNTER_ID_LIST);
     }
@@ -729,7 +729,7 @@ void FlexCounter::removeBufferPool(
     if (it != fc.m_bufferPoolCounterIdsMap.end())
     {
         fc.m_bufferPoolCounterIdsMap.erase(it);
-        if (!fc.m_bufferPoolCounterIdsMap.size())
+        if (fc.m_bufferPoolCounterIdsMap.empty())
         {
             fc.m_collectCountersHandlers.erase(BUFFER_POOL_COUNTER_ID_LIST);
         }
