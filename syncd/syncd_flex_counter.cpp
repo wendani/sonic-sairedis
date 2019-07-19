@@ -134,11 +134,15 @@ void FlexCounter::updateFlexCounterStatsMode(
 
 void FlexCounter::addCollectCountersHandler(const std::string &key, const collect_counters_handler_t &handler)
 {
+    SWSS_LOG_ENTER();
+
     m_collectCountersHandlers.emplace(key, handler);
 }
 
 void FlexCounter::removeCollectCountersHandler(const std::string &key)
 {
+    SWSS_LOG_ENTER();
+
     m_collectCountersHandlers.erase(key);
 }
 
