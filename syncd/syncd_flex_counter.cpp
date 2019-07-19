@@ -132,9 +132,9 @@ void FlexCounter::updateFlexCounterStatsMode(
     }
  }
 
-void FlexCounter::addCollectCountersHandler(const std::string &key, collect_counters_handler_t)
+void FlexCounter::addCollectCountersHandler(const std::string &key, const collect_counters_handler_t &handler)
 {
-    m_collectCountersHandlers.emplace(key, collect_counters_handler_t);
+    m_collectCountersHandlers.emplace(key, handler);
 }
 
 void FlexCounter::removeCollectCountersHandler(const std::string &key)

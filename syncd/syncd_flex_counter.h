@@ -210,7 +210,7 @@ class FlexCounter
         void collectRifCounters(_In_ swss::Table &countersTable);
         void collectBufferPoolCounters(_In_ swss::Table &countersTable);
 
-        void addCollectCountersHandler(const std::string &key, collect_counters_handler_t);
+        void addCollectCountersHandler(const std::string &key, const collect_counters_handler_t &handler);
         void removeCollectCountersHandler(const std::string &key);
 
         // Key is a Virtual ID
