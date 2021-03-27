@@ -2000,6 +2000,11 @@ sai_status_t SwitchStateBase::refresh_read_only(
         return refresh_macsec_sci_in_ingress_macsec_acl(object_id);
     }
 
+    if (meta->objecttype == SAI_OBJECT_TYPE_QUEUE && meta->attrid == SAI_QUEUE_ATTR_PAUSE_STATUS)
+    {
+        return SAI_STATUS_SUCCESS;
+    }
+
     auto mmeta = m_meta.lock();
 
     if (mmeta)
