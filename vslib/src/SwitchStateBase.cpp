@@ -1851,6 +1851,20 @@ sai_status_t SwitchStateBase::refresh_macsec_sci_in_ingress_macsec_acl(
     return SAI_STATUS_SUCCESS;
 }
 
+sai_status_t SwitchStateBase::refresh_queue_pause_status(
+        _In_ sai_object_id_t object_id)
+{
+    SWSS_LOG_ENTER();
+
+    sai_attribute_t attr;
+    attr.id = SAI_QUEUE_ATTR_PAUSE_STATUS;
+    attr.value.booldata = false;
+
+    CHECK_STATUS(set(SAI_OBJECT_TYPE_QUEUE, object_id, &attr));
+
+    return SAI_STATUS_SUCCESS;
+}
+
 // XXX extra work may be needed on GET api if N on list will be > then actual
 
 /*
@@ -2002,7 +2016,7 @@ sai_status_t SwitchStateBase::refresh_read_only(
 
     if (meta->objecttype == SAI_OBJECT_TYPE_QUEUE && meta->attrid == SAI_QUEUE_ATTR_PAUSE_STATUS)
     {
-        return SAI_STATUS_SUCCESS;
+        return refresh_queue_pause_status(object_id);
     }
 
     auto mmeta = m_meta.lock();
