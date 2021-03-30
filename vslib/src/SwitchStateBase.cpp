@@ -1856,6 +1856,10 @@ sai_status_t SwitchStateBase::refresh_queue_pause_status(
 {
     SWSS_LOG_ENTER();
 
+    // To trigger fake PFC storm on fake Broadcom platform, PFC storm detection
+    // lua requires SAI_QUEUE_ATTR_PAUSE_STATUS field to be present in COUNTERS_DB.
+    // However, the actual value of the attribute does not matter in this regard,
+    // so a dummy one is assigned here.
     sai_attribute_t attr;
     attr.id = SAI_QUEUE_ATTR_PAUSE_STATUS;
     attr.value.booldata = false;
