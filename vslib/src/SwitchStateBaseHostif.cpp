@@ -290,6 +290,51 @@ int SwitchStateBase::ifup(
     return err;
 }
 
+int SwitchStateBase::ifOperUp(
+        _In_ const char *dev,
+        _In_ bool up)
+{
+    SWSS_LOG_ENTER();
+
+    int s = socket(AF_INET, SOCK_DGRAM, 0);
+    if (s < 0)
+    {
+        SWSS_LOG_ERROR("failed to open socket: %d", s);
+        return -1;
+    }
+
+    struct ifreq ifr;
+    memset(&ifr, 0, sizeof(ifr));
+
+    strncpy(ifr.ifr_name, dev, MAX_INTERFACE_NAME_LEN);
+
+    int err = ioctl(s, SIOCGIFFLAGS, &ifr);
+    if (err < 0)
+    {
+        SWSS_LOG_ERROR("ioctl SIOCGIFFLAGS on socket %d %s failed, err %d", s, dev, err);
+        close(s);
+        return err;
+    }
+
+    if (up)
+    {
+        ifr.ifr_flags |= IFF_LOWER_UP;
+    }
+    else
+    {
+        ifr.ifr_flags &= ~IFF_LOWER_UP;
+    }
+
+    err = ioctl(s, SIOCSIFFLAGS, &ifr);
+    if (err < 0)
+    {
+        SWSS_LOG_ERROR("ioctl SIOCSIFFLAGS on socket %d %s failed, err %d", s, dev, err);
+    }
+
+    close(s);
+    return err;
+}
+
 int SwitchStateBase::promisc(
         _In_ const char *dev)
 {
@@ -665,7 +710,7 @@ sai_status_t SwitchStateBase::vs_create_hostif_tap_interface(
     {
         SWSS_LOG_ERROR("ifup failed on %s", vname.c_str());
 
-        return false;
+        return SAI_STATUS_FAILURE;
     }
 
     if (!hostif_create_tap_veth_forwarding(name, tapfd, obj_id))
