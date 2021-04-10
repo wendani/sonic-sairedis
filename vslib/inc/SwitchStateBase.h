@@ -396,6 +396,10 @@ namespace saivs
                     _In_ uint32_t attr_count,
                     _In_ const sai_attribute_t *attr_list);
 
+            sai_status_t setHostif(
+                    _In_ const std::string &serializedHostifObjectId,
+                    _In_ const sai_attribute_t *hostifAttr);
+
             sai_status_t removeHostif(
                     _In_ sai_object_id_t objectId);
 
@@ -431,6 +435,10 @@ namespace saivs
                     _In_ sai_object_id_t port_id,
                     _In_ bool up,
                     _In_ bool explicitNotification);
+
+            int ifOperUp(
+                    _In_ const char *dev,
+                    _In_ bool up);
 
             std::string vs_get_veth_name(
                     _In_ const std::string& tapname,

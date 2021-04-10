@@ -290,6 +290,130 @@ int SwitchStateBase::ifup(
     return err;
 }
 
+int SwitchStateBase::ifOperUp(
+        _In_ const char *dev,
+        _In_ bool up)
+{
+    SWSS_LOG_ENTER();
+
+    int s = socket(AF_INET, SOCK_DGRAM, 0);
+    if (s < 0)
+    {
+        SWSS_LOG_ERROR("failed to open socket: %d", s);
+        return -1;
+    }
+
+    struct ifreq ifr;
+    memset(&ifr, 0, sizeof(ifr));
+
+    strncpy(ifr.ifr_name, dev, MAX_INTERFACE_NAME_LEN);
+
+    int err = ioctl(s, SIOCGIFFLAGS, &ifr);
+    if (err < 0)
+    {
+        SWSS_LOG_ERROR("ioctl SIOCGIFFLAGS on socket %d %s failed, err %d", s, dev, err);
+        close(s);
+        return err;
+    }
+
+    if (up)
+    {
+        ifr.ifr_flags |= IFF_RUNNING;
+    }
+    else
+    {
+        ifr.ifr_flags &= ~IFF_RUNNING;
+    }
+
+    err = ioctl(s, SIOCSIFFLAGS, &ifr);
+    if (err < 0)
+    {
+        SWSS_LOG_ERROR("ioctl SIOCSIFFLAGS on socket %d %s failed, err %d", s, dev, err);
+    }
+
+    close(s);
+
+    struct nl_sock *sk = nl_socket_alloc();
+    if (!sk)
+    {
+        SWSS_LOG_ERROR("Unable to allocate socket");
+        err = 1;
+        return err;
+    }
+
+    err = nl_connect(sk, NETLINK_ROUTE);
+    if (err < 0)
+    {
+        SWSS_LOG_ERROR("Unable to connect socket, err %d", err);
+
+        nl_socket_free(sk);
+
+        return err;
+    }
+
+    struct nl_cache *cache;
+    err = rtnl_link_alloc_cache(sk, AF_UNSPEC, &cache);
+    if (err < 0)
+    {
+        SWSS_LOG_ERROR("Unable to allocate cache, err", err);
+
+        nl_socket_free(sk);
+
+        return err;
+    }
+
+    struct rtnl_link *link = rtnl_link_get_by_name(cache, dev);
+    if (!link)
+    {
+        SWSS_LOG_ERROR("Interface not found");
+
+        nl_cache_put(cache);
+        nl_socket_free(sk);
+
+        err = 1;
+        return err;
+    }
+
+    struct rtnl_link *link_chg = rtnl_link_alloc();
+    if (!link_chg)
+    {
+        SWSS_LOG_ERROR("Unable to allocate rtnl link");
+
+        rtnl_link_put(link);
+        nl_cache_put(cache);
+        nl_socket_free(sk);
+
+        err = 1;
+        return err;
+    }
+
+    if (up)
+    {
+        rtnl_link_set_flags(link_chg, IFF_LOWER_UP | IFF_PROMISC | IFF_RUNNING | IFF_NOARP);
+        rtnl_link_set_operstate(link_chg, IF_OPER_UP);
+        //rtnl_link_set_carrier(link_chg, 1);
+    }
+    else
+    {
+        rtnl_link_unset_flags(link_chg, IFF_LOWER_UP | IFF_PROMISC | IFF_RUNNING | IFF_NOARP);
+        rtnl_link_set_operstate(link_chg, IF_OPER_DOWN);
+        //rtnl_link_set_operstate(link_chg, IF_OPER_LOWERLAYERDOWN);
+        //rtnl_link_set_carrier(link_chg, 0);
+    }
+    err = rtnl_link_change(sk, link, link_chg, 0);
+    if (err < 0)
+    {
+        SWSS_LOG_ERROR("Unable to oper %s %s, err %d", up ? "up" : "down", dev, err);
+    }
+
+    rtnl_link_put(link_chg);
+    rtnl_link_put(link);
+    nl_cache_free(cache);
+    nl_socket_free(sk);
+
+    return err;
+}
+
 int SwitchStateBase::promisc(
         _In_ const char *dev)
 {
@@ -343,7 +467,7 @@ int SwitchStateBase::promisc(
 }
 
 int SwitchStateBase::vs_set_dev_mtu(
-        _In_ const char*name,
+        _In_ const char *name,
         _In_ int mtu)
 {
     SWSS_LOG_ENTER();
@@ -665,7 +789,7 @@ sai_status_t SwitchStateBase::vs_create_hostif_tap_interface(
     {
         SWSS_LOG_ERROR("ifup failed on %s", vname.c_str());
 
-        return false;
+        return SAI_STATUS_FAILURE;
     }
 
     if (!hostif_create_tap_veth_forwarding(name, tapfd, obj_id))

@@ -495,6 +495,60 @@ sai_status_t SwitchStateBase::setAclEntry(
     return set_internal(SAI_OBJECT_TYPE_ACL_ENTRY, sid, attr);
 }
 
+sai_status_t SwitchStateBase::setHostif(
+        _In_ const std::string &serializedHostifObjectId,
+        _In_ const sai_attribute_t *hostifAttr)
+{
+    SWSS_LOG_ENTER();
+
+    if (hostifAttr && hostifAttr->id == SAI_HOSTIF_ATTR_OPER_STATUS && m_switchConfig->m_useTapDevice)
+    {
+        bool up = hostifAttr->value.booldata;
+
+        sai_attribute_t attr;
+
+        // Validate SAI_HOSTIF_ATTR_TYPE
+        attr.id = SAI_HOSTIF_ATTR_TYPE;
+        sai_status_t status = get(SAI_OBJECT_TYPE_HOSTIF, serializedHostifObjectId, 1, &attr);
+        if (status != SAI_STATUS_SUCCESS)
+        {
+            SWSS_LOG_ERROR("failed to get attr type for hostif %s", serializedHostifObjectId.c_str());
+            return status;
+        }
+
+        // Tap host interface is created only for SAI_HOSTIF_TYPE_NETDEV
+        if (attr.value.s32 == SAI_HOSTIF_TYPE_NETDEV)
+        {
+            // Find host interface name
+            attr.id = SAI_HOSTIF_ATTR_NAME;
+            status = get(SAI_OBJECT_TYPE_HOSTIF, serializedHostifObjectId, 1, &attr);
+            if (status != SAI_STATUS_SUCCESS)
+            {
+                SWSS_LOG_ERROR("failed to get attr name for hostif %s", serializedHostifObjectId.c_str());
+                return status;
+            }
+
+            std::string tapname(attr.value.chardata);
+
+            auto it = m_hostif_info_map.find(tapname);
+            if (it == m_hostif_info_map.end())
+            {
+                SWSS_LOG_ERROR("failed to find host info entry for tap device: %s", tapname.c_str());
+                return SAI_STATUS_FAILURE;
+            }
+
+            // Set host interface oper status
+            if (ifOperUp(tapname.c_str(), up))
+            {
+                SWSS_LOG_ERROR("ifOperUp failed on %s", tapname.c_str());
+                return SAI_STATUS_FAILURE;
+            }
+        }
+    }
+
+    return set_internal(SAI_OBJECT_TYPE_HOSTIF, serializedHostifObjectId, hostifAttr);
+}
+
 sai_status_t SwitchStateBase::set(
         _In_ sai_object_type_t objectType,
         _In_ const std::string &serializedObjectId,
@@ -514,6 +568,11 @@ sai_status_t SwitchStateBase::set(
         sai_object_id_t objectId;
         sai_deserialize_object_id(serializedObjectId, objectId);
         return setAclEntry(objectId, attr);
+    }
+
+    if (objectType == SAI_OBJECT_TYPE_HOSTIF)
+    {
+        return setHostif(serializedObjectId, attr);
     }
 
     return set_internal(objectType, serializedObjectId, attr);
