@@ -388,7 +388,7 @@ int SwitchStateBase::promisc(
 }
 
 int SwitchStateBase::vs_set_dev_mtu(
-        _In_ const char*name,
+        _In_ const char *name,
         _In_ int mtu)
 {
     SWSS_LOG_ENTER();
