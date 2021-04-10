@@ -398,7 +398,7 @@ namespace saivs
 
             sai_status_t setHostif(
                     _In_ const std::string &serializedHostifObjectId,
-                    _In_ const sai_attribute_t *attr);
+                    _In_ const sai_attribute_t *hostifAttr);
 
             sai_status_t removeHostif(
                     _In_ sai_object_id_t objectId);

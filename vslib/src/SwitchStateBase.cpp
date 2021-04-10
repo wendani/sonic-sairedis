@@ -497,13 +497,15 @@ sai_status_t SwitchStateBase::setAclEntry(
 
 sai_status_t SwitchStateBase::setHostif(
         _In_ const std::string &serializedHostifObjectId,
-        _In_ const sai_attribute_t *attr)
+        _In_ const sai_attribute_t *hostifAttr)
 {
     SWSS_LOG_ENTER();
 
-    if (attr && attr->id == SAI_HOSTIF_ATTR_OPER_STATUS && m_switchConfig->m_useTapDevice)
+    if (hostifAttr && hostifAttr->id == SAI_HOSTIF_ATTR_OPER_STATUS && m_switchConfig->m_useTapDevice)
     {
-        bool up = attr->value.booldata;
+        bool up = hostifAttr->value.booldata;
+
+        sai_attribute_t attr;
 
         // Validate SAI_HOSTIF_ATTR_TYPE
         attr.id = SAI_HOSTIF_ATTR_TYPE;
@@ -526,9 +528,9 @@ sai_status_t SwitchStateBase::setHostif(
                 return status;
             }
 
-            std::string tapname(attr_name->value.chardata);
+            std::string tapname(attr.value.chardata);
 
-            auto it = m_hostif_info_map.find(tapname)
+            auto it = m_hostif_info_map.find(tapname);
             if (it == m_hostif_info_map.end())
             {
                 SWSS_LOG_ERROR("failed to find host info entry for tap device: %s", tapname.c_str());
@@ -544,7 +546,7 @@ sai_status_t SwitchStateBase::setHostif(
         }
     }
 
-    return set_internal(SAI_OBJECT_TYPE_HOSTIF, serializedHostifObjectId, attr);
+    return set_internal(SAI_OBJECT_TYPE_HOSTIF, serializedHostifObjectId, hostifAttr);
 }
 
 sai_status_t SwitchStateBase::set(

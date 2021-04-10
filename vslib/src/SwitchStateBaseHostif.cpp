@@ -318,11 +318,11 @@ int SwitchStateBase::ifOperUp(
 
     if (up)
     {
-        ifr.ifr_flags |= IFF_LOWER_UP;
+        ifr.ifr_flags |= IFF_RUNNING;
     }
     else
     {
-        ifr.ifr_flags &= ~IFF_LOWER_UP;
+        ifr.ifr_flags &= ~IFF_RUNNING;
     }
 
     err = ioctl(s, SIOCSIFFLAGS, &ifr);
